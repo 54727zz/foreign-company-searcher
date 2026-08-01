@@ -1,0 +1,99 @@
+﻿industry,sub_sector,company,brand_or_cn_name,country_or_region,primary_china_city_focus,recruiting_url,roles_to_watch,benefit_or_filter_tags,notes
+科技/软件/云计算,企业软件/ERP,SAP,SAP,德国,上海,https://jobs.sap.com/search/?locationsearch=Shanghai,软件工程师; 产品经理; 咨询顾问; 客户成功,五险一金; 补充商业保险; 混合办公; 员工股票; 内部转岗,上海岗位稳定，官网优先
+科技/软件/云计算,云计算/AWS,Amazon,AWS/亚马逊,美国,上海,https://www.amazon.jobs/en/search?base_query=&loc_query=Shanghai%2C+China,云架构师; 解决方案架构师; 运营; 供应链,五险一金; 商业保险; 员工折扣; 股票激励,注意区分 AWS、电商、物流岗位
+科技/软件/云计算,操作系统/云/AI,Microsoft,微软,美国,上海/北京/苏州,https://careers.microsoft.com/v2/global/en/search,软件工程师; 云销售; 客户工程师; 产品,五险一金; 商业保险; 混合办公; 股票购买计划; 学习资源,研发与商业岗位均值得跟踪
+科技/软件/云计算,搜索/广告/云,Google,谷歌,美国,上海/北京,https://www.google.com/about/careers/applications/jobs/results/?location=Shanghai%2C%20China,销售; 客户解决方案; 工程; 云,商业保险; 带薪休假; 股票/奖金; 餐饮福利,岗位数量波动较大
+科技/软件/云计算,数据库/云,Oracle,甲骨文,美国,上海/北京,https://careers.oracle.com/jobs/#en/sites/jobsearch/requisitions?location=China,软件工程师; 售前; 云销售; 咨询顾问,五险一金; 商业保险; 员工股票购买计划; 弹性办公,企业软件用户多
+科技/软件/云计算,咨询/混合云/AI,IBM,IBM,美国,上海/北京/大连,https://www.ibm.com/careers/search?field_keyword_18%5B%5D=China,咨询顾问; 软件工程师; 项目经理; 数据/AI,五险一金; 补充医疗; 混合办公; 内部转岗,注意区分正式与项目/供应商岗位
+科技/软件/云计算,网络/安全,Cisco,思科,美国,上海/北京,https://jobs.cisco.com/,网络工程师; 安全; 销售; 客户成功,五险一金; 商业保险; 员工股票购买计划; 志愿者假,福利口碑较稳
+科技/软件/云计算,CRM/SaaS,Salesforce,Salesforce,美国,上海/北京,https://careers.salesforce.com/en/jobs/,销售; 解决方案工程师; 客户成功; 咨询,商业保险; 弹性办公; 股票激励; 学习资源,SaaS 销售和售前岗位重点看
+科技/软件/云计算,创意软件/营销云,Adobe,Adobe,美国,上海/北京,https://careers.adobe.com/us/en/search-results,销售; 客户成功; 解决方案顾问; 市场,商业保险; 股票激励; 带薪休假; 弹性办公,营销云和创意云岗位可看
+半导体/芯片/硬件,CPU/数据中心,Intel,英特尔,美国,上海/北京/大连,https://jobs.intel.com/en/search-jobs/China/41147/2/1814991/35x86166/104x195397/50/2,芯片研发; 软件工程师; 销售; 供应链,五险一金; 补充医疗; 员工股票购买计划; 弹性办公,技术岗福利较完整
+半导体/芯片/硬件,GPU/AI,NVIDIA,英伟达,美国,上海/北京/深圳,https://www.nvidia.com/en-us/about-nvidia/careers/,软件工程师; 系统工程师; AI; 自动驾驶,商业保险; 股票/RSU; 带薪休假; 弹性办公,AI 赛道高热
+半导体/芯片/硬件,CPU/GPU,AMD,AMD,美国,上海/北京/深圳,https://careers.amd.com/careers-home/jobs?location=China,芯片验证; 软件工程师; 销售; FAE,五险一金; 商业保险; 股票购买计划; 绩效奖金,工程岗可重点看
+半导体/芯片/硬件,移动通信芯片,Qualcomm,高通,美国,上海/北京/深圳,https://careers.qualcomm.com/careers?location=China,软件工程师; 通信协议; FAE; 销售,五险一金; 补充商业保险; 股票购买计划; 奖金,通信和汽车芯片岗位值得看
+半导体/芯片/硬件,模拟芯片,Texas Instruments,德州仪器,美国,上海/深圳,https://careers.ti.com/,FAE; 销售工程师; 应用工程师; 管培生,商业保险; 带薪休假; 培训体系; 奖金,应届生项目可关注
+半导体/芯片/硬件,汽车芯片,NXP,恩智浦,荷兰,上海/天津/深圳,https://www.nxp.com/company/about-nxp/careers:CAREERS,芯片研发; 汽车电子; FAE; 质量,五险一金; 商业保险; 带薪休假; 培训,汽车电子方向强
+半导体/芯片/硬件,半导体设备,ASML,阿斯麦,荷兰,上海/深圳/无锡,https://www.asml.com/en/careers/find-your-job,客户支持工程师; 设备工程师; 供应链; 软件,五险一金; 商业保险; 带薪年假; 培训,设备工程师岗位多
+半导体/芯片/硬件,半导体设备,Applied Materials,应用材料,美国,上海/西安/无锡,https://www.appliedmaterials.com/us/en/careers.html,设备工程师; 工艺工程师; 供应链; 销售,商业保险; 带薪休假; 培训; 奖金,半导体设备核心公司
+半导体/芯片/硬件,检测量测设备,KLA,科磊,美国,上海/深圳,https://www.kla.com/careers,应用工程师; 设备工程师; 软件; 质量,商业保险; 带薪休假; 培训; 奖金,检测量测赛道
+汽车/新能源/工业制造,新能源车,Tesla,特斯拉,美国,上海,https://www.tesla.com/careers/search/?site=CN&location=Shanghai,制造; 供应链; 质量; 销售; 软件,五险一金; 补充商业保险; 绩效奖金; 员工优惠,上海岗位多但差异大
+汽车/新能源/工业制造,豪华车,BMW Group,宝马,德国,上海/北京/沈阳,https://www.bmwgroup.jobs/,销售市场; 金融; 研发; 售后,五险一金; 商业保险; 员工购车政策; 带薪休假,豪华车品牌岗位
+汽车/新能源/工业制造,豪华车,Mercedes-Benz,奔驰,德国,上海/北京,https://group.mercedes-benz.com/careers/,市场; 销售; 研发; 金融; 售后,五险一金; 商业保险; 带薪休假; 员工购车政策,品牌与研发岗位并存
+汽车/新能源/工业制造,汽车集团,Volkswagen Group,大众,德国,上海/北京/合肥,https://www.volkswagen-group.com/en/careers-16063,软件; 研发; 市场; 供应链; 售后,五险一金; 商业保险; 带薪休假; 培训,电动化和软件化岗位可看
+汽车/新能源/工业制造,汽车零部件,Bosch,博世,德国,上海/苏州/无锡,https://jobs.smartrecruiters.com/BoschGroup,汽车电子; 软件; 质量; 采购; 工程,五险一金; 补充医疗; 年度体检; 培训,上海及长三角岗位多
+汽车/新能源/工业制造,汽车零部件,Continental,大陆集团,德国,上海/长三角,https://www.continental.com/en/career/,汽车电子; 软件; 质量; 供应链; 销售,五险一金; 商业保险; 带薪休假; 培训,轮胎与汽车电子
+工业自动化/电气/能源,工业自动化/数字工业,Siemens,西门子,德国,上海/北京/苏州,https://jobs.siemens.com/careers,自动化工程师; 软件; 销售; 项目经理,五险一金; 补充商业保险; 弹性办公; 培训,工业自动化核心
+工业自动化/电气/能源,能源管理/自动化,Schneider Electric,施耐德电气,法国,上海/北京/无锡,https://www.se.com/ww/en/about-us/careers/job-search/,自动化; 电气; 销售; 供应链; 数字化,五险一金; 补充医疗; 员工股票计划; 弹性办公,能源管理赛道
+工业自动化/电气/能源,机器人/电气,ABB,ABB,瑞士,上海/北京/厦门,https://careers.abb/global/en/search-results?keywords=China,机器人; 自动化; 电气; 销售; 工程,五险一金; 商业保险; 绩效奖金; 培训,机器人方向可关注
+工业自动化/电气/能源,自动化/航空/楼宇,Honeywell,霍尼韦尔,美国,上海/北京/苏州,https://careers.honeywell.com/us/en,自动化; 楼宇科技; 航空; 销售; 工程,五险一金; 商业保险; 带薪休假; 奖金,多业务线
+工业自动化/电气/能源,电气/能源管理,Eaton,伊顿,爱尔兰/美国,上海/苏州,https://eaton.eightfold.ai/careers,电气工程; 供应链; 销售; 质量,五险一金; 商业保险; 带薪休假; 培训,电气与航空业务
+医药/生物科技/医疗器械,制药/诊断,Roche,罗氏,瑞士,上海,https://careers.roche.com/global/en/search-results?keywords=China,医药销售; 市场; 医学事务; 诊断; 数据,五险一金; 商业医疗; 弹性办公; 年度体检,药企福利通常较稳
+医药/生物科技/医疗器械,创新药,Novartis,诺华,瑞士,上海,https://www.novartis.com/careers/career-search?country%5B%5D=CN,医学; 市场; 销售; 注册; 临床,五险一金; 补充医疗; 带薪年假; 绩效奖金,创新药岗位
+医药/生物科技/医疗器械,药品/疫苗,Pfizer,辉瑞,美国,上海,https://www.pfizer.com/about/careers/search?keyword=China,销售; 医学事务; 市场; 注册; 临床,五险一金; 商业保险; 带薪休假; 奖金,疫苗和创新药
+医药/生物科技/医疗器械,创新药,Lilly,礼来,美国,上海,https://careers.lilly.com/us/en/search-results?keywords=Shanghai,医学; 市场; 销售; 临床; 数据,五险一金; 医疗福利; 绩效奖金; 培训,上海岗位值得长期跟踪
+医药/生物科技/医疗器械,创新药,AstraZeneca,阿斯利康,英国,上海,https://careers.astrazeneca.com/search-jobs/China/7684/2/1814991/35x86166/104x195397/50/2,医学; 市场; 销售; 数字化; 临床,五险一金; 补充医疗; 弹性办公; 奖金,销售岗位多
+医药/生物科技/医疗器械,医疗器械,Medtronic,美敦力,美国,上海,https://medtronic.eightfold.ai/careers,医疗器械销售; 临床支持; 市场; 供应链,五险一金; 商业保险; 奖金; 培训,器械岗位多
+医药/生物科技/医疗器械,医疗影像/设备,GE HealthCare,GE医疗,美国,上海/北京,https://careers.gehealthcare.com/global/en,设备销售; 临床应用; 工程; 服务,五险一金; 商业保险; 带薪休假; 培训,医疗设备方向
+宠物/动物保健/宠物食品,宠物食品/快消,Mars,玛氏,美国,上海/广州,https://careers.mars.com/global/en/search-results?keywords=China,宠物食品; 销售; 市场; 供应链; 研发,五险一金; 商业保险; 产品福利; 培训,旗下含皇家宠物食品等
+宠物/动物保健/宠物食品,宠物营养,Royal Canin,皇家宠物食品,法国/玛氏,上海/广州,https://careers.mars.com/global/en/search-results?keywords=Royal%20Canin,宠物营养顾问; 渠道销售; 市场; 兽医关系,五险一金; 商业保险; 产品福利; 培训,宠物赛道重点
+宠物/动物保健/宠物食品,宠物食品,Hill's Pet Nutrition,希尔思,美国/高露洁,上海,https://jobs.colgate.com/,渠道销售; 宠物营养; 市场; 供应链,五险一金; 商业保险; 产品福利; 奖金,属 Colgate-Palmolive
+宠物/动物保健/宠物食品,宠物食品,Nestle Purina,雀巢普瑞纳,瑞士,上海,https://www.nestle.com/jobs/search-jobs,宠物食品销售; 市场; 电商; 供应链,五险一金; 商业保险; 产品福利; 培训,雀巢宠物业务
+宠物/动物保健/宠物食品,动物保健,Zoetis,硕腾,美国,上海,https://www.zoetis.com/careers,宠物药销售; 兽医渠道; 技术服务; 市场,五险一金; 商业保险; 奖金; 培训,动物保健头部公司
+宠物/动物保健/宠物食品,动物保健,Elanco,礼蓝动保,美国,上海,https://elanco.wd5.myworkdayjobs.com/en-US/External_Career,动物保健销售; 技术服务; 市场; 注册,五险一金; 商业保险; 带薪休假; 奖金,宠物和畜牧动保
+宠物/动物保健/宠物食品,宠物诊断,IDEXX,IDEXX,美国,上海,https://careers.idexx.com/,诊断设备销售; 实验室; 技术支持; 市场,五险一金; 商业保险; 奖金; 培训,宠物诊断小众优质
+家具/家居/建材/生活方式,家具家居零售,IKEA,宜家,瑞典,上海,https://www.ikea.com/cn/en/this-is-ikea/work-with-us/,零售运营; 家居顾问; 供应链; 设计,五险一金; 员工折扣; 商业保险; 带薪年假,门店与总部岗位并存
+家具/家居/建材/生活方式,生活方式零售,MUJI,无印良品,日本,上海,https://www.muji.com.cn/cn/careers/,门店运营; 商品; 视觉陈列; 电商,五险一金; 员工折扣; 带薪休假,日资生活方式品牌
+家具/家居/建材/生活方式,设计家具,HAY,HAY/海怡,丹麦/H&M Group,上海,https://career.hm.com/,零售; 商品; 视觉陈列; 市场,员工折扣; 五险一金; 商业保险; 带薪休假,属 H&M Group
+家具/家居/建材/生活方式,办公家具,MillerKnoll,Herman Miller/MillerKnoll,美国,上海,https://www.millerknoll.com/careers,销售; 空间设计; 渠道; 市场,商业保险; 带薪休假; 员工折扣; 弹性办公,设计家具小众赛道
+家具/家居/建材/生活方式,办公家具,Steelcase,世楷,美国,上海,https://www.steelcase.com/careers/,销售; 空间解决方案; 设计; 项目,五险一金; 商业保险; 带薪休假; 培训,办公空间解决方案
+家具/家居/建材/生活方式,厨卫,Kohler,科勒,美国,上海,https://www.kohlercompany.com/careers/,销售; 市场; 零售; 供应链; 设计,五险一金; 商业保险; 员工折扣; 奖金,厨卫品牌
+家具/家居/建材/生活方式,建材/玻璃,Saint-Gobain,圣戈班,法国,上海,https://joinus.saint-gobain.com/en,销售; 工程; 研发; 供应链; EHS,五险一金; 商业保险; 带薪休假; 培训,建筑材料和高性能材料
+家具/家居/建材/生活方式,涂料,AkzoNobel,阿克苏诺贝尔,荷兰,上海,https://careers.akzonobel.com/,销售; 市场; 研发; 供应链; 工厂,五险一金; 商业保险; 带薪休假; 奖金,涂料赛道
+快消/食品饮料/日化,日化/食品,Unilever,联合利华,英国/荷兰,上海,https://careers.unilever.com/search-jobs/China/34155/2/1814991/35x86166/104x195397/50/2,品牌市场; 销售; 电商; 供应链; 管培生,五险一金; 商业保险; 产品福利; 绩效奖金,快消经典外企
+快消/食品饮料/日化,日化/个人护理,P&G,宝洁,美国,上海/广州,https://www.pgcareers.com/search-jobs/China/936/2/1814991/35x86166/104x195397/50/2,品牌管理; 销售; 供应链; 研发; 管培生,五险一金; 商业保险; 产品福利; 培训体系,管培体系强
+快消/食品饮料/日化,美妆,L'Oreal,欧莱雅,法国,上海,https://careers.loreal.com/en_US/jobs/SearchJobs/?3_110_3=18076,品牌; 电商; 零售; 市场; 供应链,五险一金; 商业保险; 员工内购; 绩效奖金,美妆赛道头部
+快消/食品饮料/日化,美妆,Estee Lauder,雅诗兰黛,美国,上海,https://www.elcompanies.com/en/careers,品牌市场; 零售; 电商; 培训; 供应链,五险一金; 商业保险; 员工内购; 带薪休假,高端美妆
+快消/食品饮料/日化,食品/咖啡/营养,Nestle,雀巢,瑞士,上海/北京,https://www.nestle.com/jobs/search-jobs,销售; 市场; 电商; 供应链; 研发,五险一金; 商业保险; 产品福利; 培训,含咖啡和宠物食品业务
+快消/食品饮料/日化,零食,Mondelez,亿滋,美国,上海,https://www.mondelezinternational.com/careers/,销售; 市场; 电商; 供应链; 研发,五险一金; 商业保险; 产品福利; 奖金,奥利奥等品牌
+快消/食品饮料/日化,咖啡零售,Starbucks,星巴克,美国,上海,https://www.starbucks.com.cn/careers/,门店运营; 区域管理; 供应链; 市场,五险一金; 商业保险; 员工饮品; Bean Stock,门店岗需看排班
+奢侈品/时尚/运动零售,奢侈品集团,LVMH,LVMH,法国,上海,https://www.lvmh.com/talents/work-with-us/job-offers/,零售; 市场; CRM; 供应链; 财务,五险一金; 商业保险; 员工折扣; 奖金,覆盖多品牌
+奢侈品/时尚/运动零售,奢侈品集团,Kering,开云,法国,上海,https://www.kering.com/en/talent/job-offers/,零售; 市场; 商品; CRM; 财务,五险一金; 商业保险; 员工折扣; 奖金,Gucci 等品牌
+奢侈品/时尚/运动零售,珠宝/奢侈品,Richemont,历峰,瑞士,上海,https://jobs.richemont.com/,零售; CRM; 市场; 供应链; 财务,五险一金; 商业保险; 员工折扣; 奖金,Cartier/VC&A 等
+奢侈品/时尚/运动零售,运动品牌,Nike,Nike,美国,上海,https://jobs.nike.com/search?location=China,零售; 市场; 电商; 供应链; 数据,五险一金; 员工折扣; 商业保险; 奖金,总部与门店岗位并存
+奢侈品/时尚/运动零售,运动品牌,Adidas,阿迪达斯,德国,上海,https://jobs.adidas-group.com/search/?q=&locationsearch=China,零售; 市场; 电商; 商品; 供应链,五险一金; 员工折扣; 商业保险; 奖金,运动零售
+金融/银行/保险/支付,银行/财富管理,HSBC,汇丰,英国/香港,上海,https://www.hsbc.com/careers/where-we-hire/china,银行运营; 财富管理; 风控; 科技; 合规,五险一金; 补充商业保险; 员工银行服务; 弹性办公,外资银行重点
+金融/银行/保险/支付,银行,Standard Chartered,渣打,英国,上海,https://www.sc.com/en/global-careers/,企业金融; 风控; 合规; 科技; 运营,五险一金; 医疗保险; 员工银行服务; 灵活办公,外资银行
+金融/银行/保险/支付,银行,Citi,花旗,美国,上海,https://jobs.citi.com/search-jobs/China/287/2/1814991/35x86166/104x195397/50/2,金融市场; 科技; 风控; 合规; 运营,五险一金; 商业保险; 员工银行服务; 奖金,金融市场和科技岗位
+金融/银行/保险/支付,投行/资管,JPMorgan Chase,摩根大通,美国,上海,https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/requisitions?location=China,投行; 资管; 科技; 运营; 风控,五险一金; 商业保险; 奖金; 健康福利,高质量金融岗位
+金融/银行/保险/支付,投行/资管,Goldman Sachs,高盛,美国,上海/北京,https://www.goldmansachs.com/careers/,投行; 资管; 科技; 风控; 运营,五险一金; 商业保险; 奖金; 健康福利,竞争高
+金融/银行/保险/支付,支付网络,Visa,Visa,美国,上海/北京,https://usa.visa.com/careers.html,支付; 数据; 风控; 销售; 产品,五险一金; 商业保险; 奖金; 弹性办公,支付网络
+咨询/会计/专业服务,审计/咨询,PwC,普华永道,英国,上海,https://www.pwccn.com/en/careers.html,审计; 税务; 咨询; 风险; 科技,五险一金; 商业保险; 资格考试支持; 培训,四大之一
+咨询/会计/专业服务,审计/咨询,Deloitte,德勤,英国,上海,https://www2.deloitte.com/cn/en/careers.html,审计; 咨询; 税务; 风险; 科技,五险一金; 商业保险; 专业资格支持; 培训,四大之一
+咨询/会计/专业服务,审计/咨询,EY,安永,英国,上海,https://www.ey.com/en_cn/careers,审计; 咨询; 税务; 风险; 科技,五险一金; 商业保险; 专业资格支持; 培训,四大之一
+咨询/会计/专业服务,审计/咨询,KPMG,毕马威,荷兰/英国,上海,https://kpmg.com/cn/en/home/careers.html,审计; 税务; 咨询; 风险; 科技,五险一金; 商业保险; 专业资格支持; 培训,四大之一
+咨询/会计/专业服务,战略咨询,McKinsey,麦肯锡,美国,上海,https://www.mckinsey.com/careers/search-jobs,咨询顾问; 数据; 研究; 实施顾问,五险一金; 商业保险; 高强度培训; 奖金,竞争高
+咨询/会计/专业服务,战略咨询,BCG,波士顿咨询,美国,上海,https://careers.bcg.com/,咨询顾问; 数据; 研究; 数字化,五险一金; 商业保险; 培训; 奖金,战略咨询
+化工/材料/农业科学,化工/材料,BASF,巴斯夫,德国,上海,https://www.basf.com/global/en/careers,研发; 销售; 供应链; 工厂; EHS,五险一金; 商业保险; 带薪休假; 培训,化工头部
+化工/材料/农业科学,化工/材料,Dow,陶氏,美国,上海,https://corporate.dow.com/en-us/careers.html,销售; 研发; 供应链; 工厂; 市场,五险一金; 商业保险; 带薪休假; 培训,材料方向
+化工/材料/农业科学,特种材料,DuPont,杜邦,美国,上海,https://careers.dupont.com/,研发; 销售; 工程; 供应链; EHS,五险一金; 商业保险; 带薪休假; 奖金,特种材料
+化工/材料/农业科学,高分子材料,Covestro,科思创,德国,上海,https://www.covestro.com/en/career,研发; 销售; 供应链; 工厂; 市场,五险一金; 商业保险; 带薪休假; 培训,材料公司
+化工/材料/农业科学,农业/食品原料,Cargill,嘉吉,美国,上海,https://careers.cargill.com/,食品原料; 贸易; 供应链; 销售; 工厂,五险一金; 商业保险; 带薪休假; 培训,农业和食品原料
+化工/材料/农业科学,营养/香精香料,DSM-Firmenich,帝斯曼-芬美意,荷兰/瑞士,上海,https://www.dsm-firmenich.com/corporate/careers.html,营养; 香精香料; 销售; 研发; 市场,五险一金; 商业保险; 带薪休假; 奖金,香精香料小众赛道
+物流/航运/供应链,快递/供应链,DHL,DHL,德国,上海,https://careers.dhl.com/,物流运营; 供应链; 销售; 客服; 仓储,五险一金; 商业保险; 带薪休假; 班次福利,岗位多
+物流/航运/供应链,航运/供应链,Maersk,马士基,丹麦,上海,https://www.maersk.com/careers,海运; 供应链; 客户服务; 销售; 运营,五险一金; 商业保险; 带薪休假; 培训,航运核心
+物流/航运/供应链,国际货代,Kuehne+Nagel,德迅,瑞士,上海,https://jobs.kuehne-nagel.com/,货代; 销售; 运营; 客服; 关务,五险一金; 商业保险; 带薪休假; 奖金,货代头部
+检测/认证/质量服务,检测认证,SGS,SGS,瑞士,上海,https://www.sgs.com/en/careers,检测工程师; 认证审核; 销售; 实验室,五险一金; 商业保险; 带薪休假; 培训,检测认证头部
+检测/认证/质量服务,检测认证,Bureau Veritas,必维,法国,上海,https://group.bureauveritas.com/careers,审核员; 检测; 质量; 销售; 实验室,五险一金; 商业保险; 带薪休假; 培训,认证服务
+检测/认证/质量服务,检测认证,TUV Rheinland,莱茵,德国,上海,https://www.tuv.com/world/en/careers.html,检测; 认证; 审核; 销售; 实验室,五险一金; 商业保险; 带薪休假; 培训,德系认证
+检测/认证/质量服务,检测认证,TUV SUD,南德,德国,上海,https://www.tuvsud.com/en/careers,检测工程师; 审核员; 销售; 实验室,五险一金; 商业保险; 带薪休假; 培训,工业和消费品认证
+酒店/旅游/航空/文旅,酒店,Marriott,万豪,美国,上海,https://jobs.marriott.com/,酒店运营; 前厅; 餐饮; 销售; 市场,五险一金; 员工价; 餐饮/班次福利; 培训,酒店岗位需看班次
+酒店/旅游/航空/文旅,酒店,Hilton,希尔顿,美国,上海,https://jobs.hilton.com/,酒店运营; 销售; 餐饮; 前厅; 财务,五险一金; 员工价; 餐饮/班次福利; 培训,酒店集团
+酒店/旅游/航空/文旅,文旅/媒体,Disney,迪士尼,美国,上海,https://www.disneycareers.com/,主题乐园运营; 市场; 供应链; 技术; 演艺,五险一金; 商业保险; 员工优惠; 班次福利,上海迪士尼相关
+广告/媒体/市场研究/数据,广告传播集团,WPP,WPP,英国,上海,https://www.wpp.com/careers,广告; 公关; 策略; 客户经理; 创意,五险一金; 商业保险; 带薪休假; 项目奖金,集团入口
+广告/媒体/市场研究/数据,消费者洞察,NielsenIQ,尼尔森IQ,美国,上海,https://nielseniq.com/global/en/careers/,数据分析; 客户成功; 咨询; 市场研究,五险一金; 商业保险; 弹性办公; 培训,零售数据
+广告/媒体/市场研究/数据,市场研究,Kantar,凯度,英国,上海,https://www.kantar.com/careers,研究咨询; 数据分析; 客户经理; 品牌研究,五险一金; 商业保险; 带薪休假; 培训,市场研究
+房地产/商业地产/设施管理,商业地产,JLL,仲量联行,美国/英国,上海,https://www.jll.com/en/careers,商业地产顾问; 设施管理; 估值; 项目管理,五险一金; 商业保险; 带薪休假; 奖金,商业地产外企
+房地产/商业地产/设施管理,商业地产/设施管理,CBRE,世邦魏理仕,美国,上海,https://careers.cbre.com/,设施管理; 物业; 投资顾问; 项目管理,五险一金; 商业保险; 带薪休假; 奖金,设施管理岗位多
+游戏/娱乐/内容平台,游戏研发,Ubisoft,育碧,法国,上海,https://www.ubisoft.com/en-us/company/careers,游戏开发; 美术; 发行; 测试; 项目管理,五险一金; 商业保险; 带薪休假; 员工游戏福利,上海有工作室基础
+游戏/娱乐/内容平台,游戏,Electronic Arts,EA,美国,上海,https://www.ea.com/careers,游戏开发; 发行; 数据; 测试; 产品,五险一金; 商业保险; 带薪休假; 员工福利,岗位数量波动
