@@ -4,28 +4,30 @@
 
 # 外企雷达
 
-外企雷达是一个面向中国求职者的外企岗位与福利情报库。它不只是展示“有哪些外企”，而是帮助用户按行业、城市、福利标签和岗位来源发现更值得投递的外企机会。
+一个使用 React + TypeScript 构建的外企公司与岗位信息展示网站。项目包含外企公司数据、基础筛选界面，以及一个 SAP 中国岗位抓取示例。
 
-线上地址：[https://foreign-company-searcher.pages.dev](https://foreign-company-searcher.pages.dev)
+线上示例：[https://foreign-company-searcher.pages.dev](https://foreign-company-searcher.pages.dev)
 
 ![外企雷达首页](docs/assets/homepage.png)
 
-## 核心功能
+## 功能
 
-- 外企公司库：按行业、细分赛道、国家/地区和重点城市整理外企。
-- 搜索与筛选：支持搜索公司、城市、岗位方向、福利关键词。
-- 高价值福利标签：例如五险一金、商业保险、补充福利、员工股票、混合办公、员工折扣等。
-- 今日推荐：突出展示当前值得关注的公司和岗位。
-- 官网岗位展示：当前已接入 SAP 中国范围岗位抓取结果。
-- 公司详情：点击公司卡片可查看常见岗位、福利标签、招聘入口和备注。
-- 设计文档：`docs/` 里包含产品计划、软件设计和 SAP 抓取方案。
+- 浏览外企公司列表
+- 按行业筛选公司
+- 按福利标签筛选公司
+- 搜索公司、城市、岗位方向和福利关键词
+- 查看公司详情和官网招聘入口
+- 展示 SAP 中国岗位抓取结果
+- 支持 Cloudflare Pages 静态部署
 
-## 当前数据
+## 技术栈
 
-- 公司库：`foreign_companies_by_industry.csv`
-- 前端公司数据：`public/foreign_companies_by_industry.csv`
-- SAP 岗位数据：`public/jobs/sap-china.json`
-- 抓取原始输出：`data/jobs/sap-china.json`
+- React
+- TypeScript
+- Vite
+- CSS
+- Cloudflare Pages
+- Node.js 抓取脚本
 
 ## 本地运行
 
@@ -34,21 +36,11 @@ npm install
 npm run dev
 ```
 
-打开本地地址：
+默认本地地址：
 
 ```text
 http://127.0.0.1:5173/
 ```
-
-## 更新 SAP 岗位
-
-```bash
-npm run scrape:sap
-cp data/jobs/sap-china.json public/jobs/sap-china.json
-npm run build
-```
-
-抓取脚本会访问 SAP Careers 中国范围搜索结果，解析岗位标题、城市、来源链接和抓取时间。
 
 ## 构建
 
@@ -56,11 +48,19 @@ npm run build
 npm run build
 ```
 
-构建产物会生成在 `dist/`。
+构建产物会生成在 `dist/` 目录。
 
-## 部署
+## 更新 SAP 岗位数据
 
-当前项目部署在 Cloudflare Pages。
+```bash
+npm run scrape:sap
+cp data/jobs/sap-china.json public/jobs/sap-china.json
+npm run build
+```
+
+`scripts/scrape-sap.mjs` 会抓取 SAP Careers 中国范围搜索结果，并输出岗位标题、地点、来源链接和抓取时间。
+
+## 部署到 Cloudflare Pages
 
 ```bash
 npm run build
@@ -72,9 +72,9 @@ npx wrangler pages deploy dist --project-name foreign-company-searcher --branch 
 ```text
 .
 ├── data/jobs/                 # 抓取脚本输出的岗位数据
-├── docs/                      # 产品、技术和抓取设计文档
+├── docs/                      # 项目设计和实现文档
 ├── docs/assets/homepage.png   # README 截图
-├── public/                    # 前端可直接读取的静态数据
+├── public/                    # 前端静态数据
 ├── scripts/scrape-sap.mjs     # SAP 岗位抓取脚本
 ├── src/                       # React 前端代码
 ├── foreign_companies_by_industry.csv
@@ -82,13 +82,15 @@ npx wrangler pages deploy dist --project-name foreign-company-searcher --branch 
 └── vite.config.ts
 ```
 
-## 产品方向
+## 主要数据文件
 
-外企雷达的长期目标不是做另一个泛招聘网站，而是做“外企正式岗位 + 福利可信度 + 外包风险识别 + 小众赛道地图”。后续可以继续扩展：
+- `foreign_companies_by_industry.csv`：原始公司数据
+- `public/foreign_companies_by_industry.csv`：前端读取的公司数据
+- `data/jobs/sap-china.json`：SAP 抓取脚本输出
+- `public/jobs/sap-china.json`：前端读取的 SAP 岗位数据
 
-- 更多公司官网岗位抓取。
-- 合同类型/外包风险识别。
-- 福利证据链和可信度等级。
-- 行业专题页，例如宠物、家具家居、半导体设备、检测认证、香精香料。
-- 岗位订阅和更新提醒。
+## 文档
 
+- [实施计划](docs/implementation_plan.md)
+- [软件设计计划](docs/software_design_plan.md)
+- [SAP 岗位抓取方案](docs/sap_job_crawler_plan.md)
