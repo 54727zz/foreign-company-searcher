@@ -1,3 +1,7 @@
+<p align="right">
+  <strong>中文</strong> | <a href="README.en.md">English</a>
+</p>
+
 # 外企雷达
 
 外企雷达是一个面向中国求职者的外企岗位与福利情报库。它不只是展示“有哪些外企”，而是帮助用户按行业、城市、福利标签和岗位来源发现更值得投递的外企机会。
@@ -88,6 +92,3 @@ npx wrangler pages deploy dist --project-name foreign-company-searcher --branch 
 - 行业专题页，例如宠物、家具家居、半导体设备、检测认证、香精香料。
 - 岗位订阅和更新提醒。
 
-## English README
-
-See [README.en.md](README.en.md).

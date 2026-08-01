@@ -1,3 +1,7 @@
+<p align="right">
+  <a href="README.md">中文</a> | <strong>English</strong>
+</p>
+
 # Foreign Company Radar
 
 Foreign Company Radar is a job and benefits intelligence site for people in China who want to find real opportunities at multinational companies. It is designed to help users discover companies and jobs by industry, city, benefits, and official career sources.
@@ -90,6 +94,3 @@ Planned extensions include:
 - Industry topic pages, such as pet care, furniture, semiconductor equipment, testing and certification, and flavors and fragrances.
 - Job subscriptions and update alerts.
 
-## 中文说明
-
-See [README.md](README.md).
