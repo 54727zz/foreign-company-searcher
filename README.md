@@ -72,7 +72,6 @@ npx wrangler pages deploy dist --project-name foreign-company-searcher --branch 
 ```text
 .
 ├── data/jobs/                 # 抓取脚本输出的岗位数据
-├── docs/                      # 项目设计和实现文档
 ├── docs/assets/homepage.png   # README 截图
 ├── public/                    # 前端静态数据
 ├── scripts/scrape-sap.mjs     # SAP 岗位抓取脚本
@@ -89,8 +88,3 @@ npx wrangler pages deploy dist --project-name foreign-company-searcher --branch 
 - `data/jobs/sap-china.json`：SAP 抓取脚本输出
 - `public/jobs/sap-china.json`：前端读取的 SAP 岗位数据
 
-## 文档
-
-- [实施计划](docs/implementation_plan.md)
-- [软件设计计划](docs/software_design_plan.md)
-- [SAP 岗位抓取方案](docs/sap_job_crawler_plan.md)
