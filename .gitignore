@@ -14,5 +14,6 @@ docs/*.md
 work/
 data/jobs/
 foreign_companies_by_industry.csv
+foreign_companies_by_industry.xlsx
 public/foreign_companies_by_industry.csv
 public/jobs/
