@@ -4,7 +4,7 @@
 
 # Foreign Company Radar
 
-A React + TypeScript website for browsing multinational-company information and job data in China. The project includes a company directory, basic filtering UI, and an example SAP China job crawler.
+A React + TypeScript website for browsing multinational-company information and job data in China. The project includes company filtering UI and an example SAP China job crawler.
 
 Live demo: [https://foreign-company-searcher.pages.dev](https://foreign-company-searcher.pages.dev)
 
@@ -54,12 +54,11 @@ The production build is generated in `dist/`.
 
 ```bash
 npm run scrape:sap
-cp data/jobs/sap-china.json public/jobs/sap-china.json
 npm run build
 ```
 
 `scripts/scrape-sap.mjs` fetches SAP Careers search results for China and outputs job title, location, source URL, and scrape time.
-Raw crawler output is kept locally in `data/jobs/`, which is not committed to GitHub. The frontend only loads the curated `public/jobs/sap-china.json` file.
+Raw crawler output and frontend data files are kept locally and are not committed to GitHub.
 
 ## Deploy to Cloudflare Pages
 
@@ -73,16 +72,13 @@ npx wrangler pages deploy dist --project-name foreign-company-searcher --branch 
 ```text
 .
 ├── docs/assets/homepage.png   # README screenshot
-├── public/                    # Static data loaded by the frontend
+├── public/                    # Local static assets
 ├── scripts/scrape-sap.mjs     # SAP job crawler
 ├── src/                       # React frontend source code
-├── foreign_companies_by_industry.csv
 ├── package.json
 └── vite.config.ts
 ```
 
-## Main Data Files
+## Data Files
 
-- `foreign_companies_by_industry.csv`: source company data
-- `public/foreign_companies_by_industry.csv`: company data loaded by the frontend
-- `public/jobs/sap-china.json`: SAP job data loaded by the frontend
+Company and job data files are kept in the local development environment for development, builds, and deployment previews. The repository does not publish these data files.

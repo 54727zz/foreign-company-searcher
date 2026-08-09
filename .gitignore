@@ -13,4 +13,6 @@ pnpm-debug.log*
 docs/*.md
 work/
 data/jobs/
-public/jobs/sap-shanghai.json
+foreign_companies_by_industry.csv
+public/foreign_companies_by_industry.csv
+public/jobs/

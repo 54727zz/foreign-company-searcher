@@ -4,7 +4,7 @@
 
 # 外企雷达
 
-一个使用 React + TypeScript 构建的外企公司与岗位信息展示网站。项目包含外企公司数据、基础筛选界面，以及一个 SAP 中国岗位抓取示例。
+一个使用 React + TypeScript 构建的外企公司与岗位信息展示网站。项目包含外企公司筛选界面，以及一个 SAP 中国岗位抓取示例。
 
 线上示例：[https://foreign-company-searcher.pages.dev](https://foreign-company-searcher.pages.dev)
 
@@ -54,12 +54,11 @@ npm run build
 
 ```bash
 npm run scrape:sap
-cp data/jobs/sap-china.json public/jobs/sap-china.json
 npm run build
 ```
 
 `scripts/scrape-sap.mjs` 会抓取 SAP Careers 中国范围搜索结果，并输出岗位标题、地点、来源链接和抓取时间。
-抓取脚本的原始输出保存在本地 `data/jobs/`，该目录不提交到 GitHub；前端只读取整理后的 `public/jobs/sap-china.json`。
+抓取脚本的原始输出和前端数据文件仅保存在本地，不提交到 GitHub。
 
 ## 部署到 Cloudflare Pages
 
@@ -73,16 +72,13 @@ npx wrangler pages deploy dist --project-name foreign-company-searcher --branch 
 ```text
 .
 ├── docs/assets/homepage.png   # README 截图
-├── public/                    # 前端静态数据
+├── public/                    # 本地静态资源
 ├── scripts/scrape-sap.mjs     # SAP 岗位抓取脚本
 ├── src/                       # React 前端代码
-├── foreign_companies_by_industry.csv
 ├── package.json
 └── vite.config.ts
 ```
 
-## 主要数据文件
+## 数据文件
 
-- `foreign_companies_by_industry.csv`：原始公司数据
-- `public/foreign_companies_by_industry.csv`：前端读取的公司数据
-- `public/jobs/sap-china.json`：前端读取的 SAP 岗位数据
+公司与岗位数据文件仅保存在本地环境，用于开发、构建和部署预览；仓库不公开提交这些数据文件。
