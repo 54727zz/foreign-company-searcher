@@ -325,7 +325,7 @@ export default function App() {
           <section className="panel feedbackPanel" id="feedback">
             <div className="feedbackIntro">
               <div className="eyebrow">用户反馈</div>
-              <h3>你希望外企求职网站还提供什么？</h3>
+              <h3>你希望我们的外企雷达网站还提供什么？</h3>
               <p>告诉我们你最想要的功能、城市和岗位方向，我们会优先补充高需求内容。</p>
             </div>
             <form className="feedbackForm" onSubmit={submitFeedback}>
