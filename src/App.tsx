@@ -10,6 +10,19 @@ const quickSearches = ['宠物', '家具', '半导体', '补充', '股票'];
 const popularCities = ['上海', '北京', '苏州', '大连', '成都', '武汉', '南京', '杭州', '长沙', '郑州'];
 const feedbackOptions = ['更多城市外企名单', '实时岗位更新', '福利待遇和年假信息', '外包/正式合同识别', '简历和面试经验', '按岗位推荐公司'];
 
+type AdminRow = Record<string, string | number | null>;
+
+type AdminSummary = {
+  generatedAt: string;
+  eventCounts: AdminRow[];
+  topCompanies: AdminRow[];
+  topCities: AdminRow[];
+  topRegions: AdminRow[];
+  topCareerLinks: AdminRow[];
+  recentFeedback: AdminRow[];
+  dailyEvents: AdminRow[];
+};
+
 function splitWords(value: string): string[] {
   return value.split(';').map((item) => item.trim()).filter(Boolean);
 }
@@ -42,7 +55,111 @@ function linkLabel(url: string, index: number): string {
   }
 }
 
+function AdminDashboard() {
+  const [password, setPassword] = useState(() => localStorage.getItem('foreignRadarAdminPassword') ?? '');
+  const [data, setData] = useState<AdminSummary | null>(null);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [error, setError] = useState('');
+
+  async function loadAdminData(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    if (!password.trim()) {
+      setError('请输入管理员密码。');
+      setStatus('error');
+      return;
+    }
+    setStatus('loading');
+    setError('');
+    try {
+      const response = await fetch('/api/admin/summary', {
+        headers: { authorization: `Bearer ${password.trim()}` },
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.error ?? 'load-failed');
+      localStorage.setItem('foreignRadarAdminPassword', password.trim());
+      setData(payload);
+      setStatus('ready');
+    } catch (adminError) {
+      setData(null);
+      setStatus('error');
+      setError(adminError instanceof Error && adminError.message === 'unauthorized' ? '密码不正确。' : '数据加载失败，请稍后再试。');
+    }
+  }
+
+  useEffect(() => {
+    if (password) loadAdminData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const totalEvents = data?.eventCounts.reduce((sum, row) => sum + Number(row.count ?? 0), 0) ?? 0;
+
+  return (
+    <main className="adminPage">
+      <section className="adminHero">
+        <div>
+          <div className="eyebrow">ADMIN DASHBOARD</div>
+          <h1>外企雷达数据后台</h1>
+          <p>查看用户反馈、热门城市、热门公司、招聘入口点击和最近事件趋势。</p>
+        </div>
+        <form className="adminLogin" onSubmit={loadAdminData}>
+          <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="管理员密码" />
+          <button className="primaryButton" type="submit" disabled={status === 'loading'}>{status === 'loading' ? '加载中' : '刷新数据'}</button>
+          {error ? <span>{error}</span> : null}
+        </form>
+      </section>
+
+      {data ? (
+        <>
+          <section className="adminStats">
+            <div className="panel adminStat"><strong>{totalEvents}</strong><span>累计事件</span></div>
+            <div className="panel adminStat"><strong>{data.recentFeedback.length}</strong><span>最近反馈</span></div>
+            <div className="panel adminStat"><strong>{data.topCompanies.length}</strong><span>被点击公司</span></div>
+            <div className="panel adminStat"><strong>{data.topCities.length}</strong><span>被查询城市</span></div>
+          </section>
+
+          <section className="adminGrid">
+            <AdminTable title="用户反馈" rows={data.recentFeedback} columns={['created_at', 'feature_needs', 'target_city', 'target_role', 'contact', 'message']} empty="还没有用户反馈。" />
+            <AdminTable title="热门城市" rows={data.topCities} columns={['city', 'count']} empty="还没有城市点击。" />
+            <AdminTable title="热门公司" rows={data.topCompanies} columns={['company', 'count']} empty="还没有公司点击。" />
+            <AdminTable title="地区筛选" rows={data.topRegions} columns={['region', 'count']} empty="还没有地区点击。" />
+            <AdminTable title="招聘入口点击" rows={data.topCareerLinks} columns={['company', 'target_url', 'count']} empty="还没有招聘入口点击。" />
+            <AdminTable title="事件总览" rows={data.eventCounts} columns={['event_name', 'count']} empty="还没有事件。" />
+            <AdminTable title="最近 14 天事件" rows={data.dailyEvents} columns={['day', 'event_name', 'count']} empty="还没有趋势数据。" />
+          </section>
+          <p className="adminUpdated">更新时间：{new Date(data.generatedAt).toLocaleString('zh-CN')}</p>
+        </>
+      ) : null}
+    </main>
+  );
+}
+
+function AdminTable({ title, rows, columns, empty }: { title: string; rows: AdminRow[]; columns: string[]; empty: string }) {
+  return (
+    <section className="panel adminTableCard">
+      <h2>{title}</h2>
+      {rows.length > 0 ? (
+        <div className="adminTableWrap">
+          <table>
+            <thead>
+              <tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr>
+            </thead>
+            <tbody>
+              {rows.map((row, index) => (
+                <tr key={`${title}-${index}`}>
+                  {columns.map((column) => <td key={column}>{row[column] ?? '-'}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : <p>{empty}</p>}
+    </section>
+  );
+}
+
 export default function App() {
+  if (window.location.pathname === '/admin') return <AdminDashboard />;
+
   const [companies, setCompanies] = useState<Company[]>([]);
   const [query, setQuery] = useState('');
   const [industry, setIndustry] = useState('全部');

@@ -5,6 +5,8 @@ type PagesContext = {
 
 const ALLOWED_EXACT_PATHS = new Set([
   '/',
+  '/admin',
+  '/api/admin/summary',
   '/api/feedback',
   '/api/track',
   '/foreign_companies_by_industry.csv',
@@ -22,7 +24,6 @@ const SUSPICIOUS_PATHS = [
   /^\/wp-/i,
   /^\/wordpress/i,
   /^\/phpmyadmin/i,
-  /^\/admin/i,
   /^\/install/i,
   /^\/setup/i,
   /^\/vendor/i,
@@ -103,7 +104,7 @@ export const onRequest = async (context: PagesContext): Promise<Response> => {
     return blocked('blocked-random-hash-path');
   }
 
-  if (SUSPICIOUS_PATHS.some((pattern) => pattern.test(pathname))) {
+  if (!isAllowedPath(pathname) && SUSPICIOUS_PATHS.some((pattern) => pattern.test(pathname))) {
     return blocked('blocked-suspicious-path');
   }
 
