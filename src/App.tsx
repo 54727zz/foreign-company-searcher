@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { loadCompanies } from './lib/csv';
+import { trackEvent } from './lib/analytics';
 import { chinaRegions, companyMatchesRegion, jobMatchesRegion, topCitiesForRegion } from './lib/locations';
 import type { Company, JobFeed } from './types';
 
 const benefitFilters = ['五险一金', '商业保险', '补充', '股票', '混合办公', '员工折扣', '奖金', '培训'];
 const quickSearches = ['宠物', '家具', '半导体', '补充', '股票'];
+const freeCompanyViewLimit = 3;
+const proDurationMs = 7 * 24 * 60 * 60 * 1000;
+const viewStorageKey = 'foreignRadarViewedCompanies';
+const proStorageKey = 'foreignRadarProUntil';
 
 function splitWords(value: string): string[] {
   return value.split(';').map((item) => item.trim()).filter(Boolean);
@@ -48,7 +53,11 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [sapJobs, setSapJobs] = useState<JobFeed | null>(null);
   const [selectedRegion, setSelectedRegion] = useState('全部');
+  const [selectedRegionCity, setSelectedRegionCity] = useState<string | null>(null);
   const [wechatOpen, setWechatOpen] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [viewedCompanies, setViewedCompanies] = useState<string[]>([]);
+  const [proUntil, setProUntil] = useState(0);
 
   useEffect(() => {
     loadCompanies().then(setCompanies).catch(() => setError('公司数据加载失败，请检查 CSV 文件。'));
@@ -56,6 +65,16 @@ export default function App() {
       .then((response) => (response.ok ? response.json() : null))
       .then((feed: JobFeed | null) => setSapJobs(feed))
       .catch(() => setSapJobs(null));
+  }, []);
+
+  useEffect(() => {
+    try {
+      setViewedCompanies(JSON.parse(localStorage.getItem(viewStorageKey) ?? '[]'));
+      setProUntil(Number(localStorage.getItem(proStorageKey) ?? '0'));
+    } catch {
+      setViewedCompanies([]);
+      setProUntil(0);
+    }
   }, []);
 
   const industries = useMemo(() => [...new Set(companies.map((company) => company.industry))].sort(), [companies]);
@@ -98,8 +117,20 @@ export default function App() {
   const activeRegion = regionStats.find((region) => region.id === selectedRegion) ?? null;
   const activeRegionCompanies = useMemo(() => {
     if (selectedRegion === '全部') return [];
-    return companies.filter((company) => companyMatchesRegion(company, selectedRegion)).slice(0, 10);
-  }, [companies, selectedRegion]);
+    return companies
+      .filter((company) => companyMatchesRegion(company, selectedRegion))
+      .filter((company) => !selectedRegionCity || company.primaryChinaCityFocus.includes(selectedRegionCity))
+      .slice(0, 20);
+  }, [companies, selectedRegion, selectedRegionCity]);
+
+  function selectRegion(regionId: string) {
+    setSelectedRegion(regionId);
+    setSelectedRegionCity(null);
+    if (regionId !== '全部') {
+      const region = chinaRegions.find((item) => item.id === regionId);
+      trackEvent('region_filter_click', { region: region?.name ?? regionId });
+    }
+  }
 
   function toggleBenefit(value: string) {
     setBenefits((current) => {
@@ -114,7 +145,34 @@ export default function App() {
     setIndustry('全部');
     setBenefits(new Set());
     setQuery('');
-    setSelectedRegion('全部');
+    selectRegion('全部');
+  }
+
+  const hasProAccess = proUntil > Date.now();
+  const remainingFreeViews = Math.max(0, freeCompanyViewLimit - viewedCompanies.length);
+
+  function openCompany(company: Company) {
+    if (hasProAccess || viewedCompanies.includes(company.company) || viewedCompanies.length < freeCompanyViewLimit) {
+      trackEvent('company_detail_click', { company: company.company });
+      setSelected(company);
+      if (!hasProAccess && !viewedCompanies.includes(company.company)) {
+        const next = [...viewedCompanies, company.company];
+        setViewedCompanies(next);
+        localStorage.setItem(viewStorageKey, JSON.stringify(next));
+      }
+      return;
+    }
+    trackEvent('paywall_view', { company: company.company });
+    setPaywallOpen(true);
+  }
+
+  function unlockProTrial() {
+    trackEvent('paywall_unlock_click');
+    const until = Date.now() + proDurationMs;
+    setProUntil(until);
+    localStorage.setItem(proStorageKey, String(until));
+    setPaywallOpen(false);
+    setWechatOpen(true);
   }
 
   return (
@@ -155,7 +213,7 @@ export default function App() {
           </section>
 
           <section className="panel filterPanel">
-            <div className="filterTitle"><h2>高价值福利</h2><span>可叠加</span></div>
+                <div className="filterTitle"><h2>高价值福利</h2><span>可叠加</span></div>
             <div className="chips">
               {benefitFilters.map((item) => (
                 <button key={item} className={`chip ${benefits.has(item) ? 'active' : ''}`} onClick={() => toggleBenefit(item)}>{item}</button>
@@ -167,6 +225,11 @@ export default function App() {
             <div className="panel stat"><strong>{companies.length}</strong><span>外企公司</span></div>
             <div className="panel stat"><strong>{industries.length}</strong><span>行业分类</span></div>
             <div className="panel stat"><strong>{filtered.length}</strong><span>当前匹配</span></div>
+          </section>
+
+          <section className="panel proStatus">
+            <strong>{hasProAccess ? 'Pro 已解锁' : `免费查看 ${remainingFreeViews} 家`}</strong>
+            <span>{hasProAccess ? '7 天内不限查看公司详情' : '第 4 家开始提示解锁完整外企库'}</span>
           </section>
         </aside>
 
@@ -207,7 +270,7 @@ export default function App() {
                 <div className="featuredActions">
                   <button className="primaryButton" onClick={() => {
                     const sap = companies.find((company) => company.company === 'SAP');
-                    if (sap) setSelected(sap);
+                    if (sap) openCompany(sap);
                   }}>查看 SAP 岗位</button>
                   <a className="ghostButton" href={sapJobs.sourceUrl} target="_blank" rel="noreferrer">打开 SAP 官网</a>
                 </div>
@@ -229,9 +292,9 @@ export default function App() {
               <h3>先看区域，再进城市</h3>
               <p>点击地图区域，快速查看当地外企公司和 SAP 在招岗位。</p>
               <div className="regionActions">
-                <button className={`chip ${selectedRegion === '全部' ? 'active' : ''}`} onClick={() => setSelectedRegion('全部')}>全国</button>
+                <button className={`chip ${selectedRegion === '全部' ? 'active' : ''}`} onClick={() => selectRegion('全部')}>全国</button>
                 {regionStats.map((region) => (
-                  <button key={region.id} className={`chip ${selectedRegion === region.id ? 'active' : ''}`} onClick={() => setSelectedRegion(region.id)}>
+                  <button key={region.id} className={`chip ${selectedRegion === region.id ? 'active' : ''}`} onClick={() => selectRegion(region.id)}>
                     {region.name} {region.total}
                   </button>
                 ))}
@@ -241,18 +304,23 @@ export default function App() {
                   <strong>{activeRegion.name}</strong>
                   <span>{activeRegion.companyCount} 家公司 · {activeRegion.jobCount} 个 SAP 岗位</span>
                   <div>
-                    {activeRegion.topCities.length > 0 ? activeRegion.topCities.map(([city, count]) => <b key={city}>{city} {count}</b>) : <b>等待补充城市数据</b>}
+                    {activeRegion.topCities.length > 0 ? activeRegion.topCities.map(([city, count]) => (
+                      <button key={city} className={selectedRegionCity === city ? 'active' : ''} onClick={() => {
+                        setSelectedRegionCity(selectedRegionCity === city ? null : city);
+                        trackEvent('city_filter_click', { region: activeRegion.name, city });
+                      }}>{city} {count}</button>
+                    )) : <b>等待补充城市数据</b>}
                   </div>
                 </div>
               ) : null}
               {activeRegion ? (
                 <div className="regionCompanies">
                   <div className="regionCompaniesHead">
-                    <strong>{activeRegion.name}外企名单</strong>
+                    <strong>{selectedRegionCity ? `${selectedRegionCity}外企名单` : `${activeRegion.name}外企名单`}</strong>
                     <span>{activeRegionCompanies.length} / {activeRegion.companyCount}</span>
                   </div>
                   {activeRegionCompanies.length > 0 ? activeRegionCompanies.map((company) => (
-                    <button key={`${activeRegion.id}-${company.company}`} onClick={() => setSelected(company)}>
+                    <button key={`${activeRegion.id}-${company.company}`} onClick={() => openCompany(company)}>
                       <span>{company.company}</span>
                       <small>{company.industry} · {company.primaryChinaCityFocus}</small>
                     </button>
@@ -271,7 +339,7 @@ export default function App() {
                         d={region.shape}
                         className={isActive ? 'active' : ''}
                         fill={`rgba(15, 118, 110, ${intensity})`}
-                        onClick={() => setSelectedRegion(region.id)}
+                        onClick={() => selectRegion(region.id)}
                       />
                     </g>
                   );
@@ -281,7 +349,7 @@ export default function App() {
                   const x = match ? Number(match[1]) + 54 : 100;
                   const y = match ? Number(match[2]) + 72 : 100;
                   return (
-                    <g key={`${region.id}-label`} className="mapLabel" onClick={() => setSelectedRegion(region.id)}>
+                    <g key={`${region.id}-label`} className="mapLabel" onClick={() => selectRegion(region.id)}>
                       <text x={x} y={y}>{region.name}</text>
                       <text x={x} y={y + 24}>{region.companyCount} 公司 / {region.jobCount} 岗</text>
                     </g>
@@ -305,7 +373,7 @@ export default function App() {
 
           <section className="companyGrid">
             {filtered.map((company) => (
-              <article className="panel companyCard" key={`${company.company}-${company.recruitingUrl}`} onClick={() => setSelected(company)}>
+              <article className="panel companyCard" key={`${company.company}-${company.recruitingUrl}`} onClick={() => openCompany(company)}>
                 <div className="companyHead">
                   <div className="logo" style={{ background: colorFor(company.industry) }}>{initials(company.company)}</div>
                   <div>
@@ -387,7 +455,7 @@ export default function App() {
               <h3>招聘入口</h3>
               <div className="careerLinks">
                 {splitRecruitingUrls(selected.recruitingUrl).map((url, index) => (
-                  <a className={index === 0 ? 'primaryButton linkButton' : 'ghostButton linkButton'} href={url} target="_blank" rel="noreferrer" key={url}>
+                  <a className={index === 0 ? 'primaryButton linkButton' : 'ghostButton linkButton'} href={url} target="_blank" rel="noreferrer" key={url} onClick={() => trackEvent('career_link_click', { company: selected.company, targetUrl: url })}>
                     {linkLabel(url, index)}
                   </a>
                 ))}
@@ -396,7 +464,10 @@ export default function App() {
           </aside>
         </div>
       ) : null}
-      <button className="wechatDock" aria-label="加入外企求职微信群" onClick={() => setWechatOpen(true)} onMouseEnter={() => setWechatOpen(true)}>
+      <button className="wechatDock" aria-label="加入外企求职微信群" onClick={() => {
+        trackEvent('wechat_qr_open');
+        setWechatOpen(true);
+      }} onMouseEnter={() => setWechatOpen(true)}>
         <img className="wechatQr" src="/assets/wechat-group-qr.png" alt="外企雷达求职交流群二维码" />
         <div>
           <strong>加入外企求职群</strong>
@@ -410,6 +481,34 @@ export default function App() {
             <button className="closeButton" onClick={() => setWechatOpen(false)} aria-label="关闭">×</button>
             <img src="/assets/wechat-group-qr.png" alt="外企雷达求职交流群二维码" />
           </div>
+        </div>
+      ) : null}
+      {paywallOpen ? (
+        <div className="paywallModal" role="dialog" aria-modal="true" aria-label="解锁外企雷达 Pro">
+          <button className="wechatShade" onClick={() => setPaywallOpen(false)} aria-label="关闭解锁弹窗" />
+          <section className="paywallCard">
+            <button className="closeButton" onClick={() => setPaywallOpen(false)} aria-label="关闭">×</button>
+            <div className="eyebrow">FOREIGN RADAR PRO</div>
+            <h2>你今天已经查看 3 家外企</h2>
+            <p>解锁完整外企库，继续查看公司详情、招聘入口、城市名单、岗位更新和福利避坑线索。</p>
+            <div className="priceBox">
+              <strong>9.9 元</strong>
+              <span>解锁 7 天 · 当前为转化验证版</span>
+            </div>
+            <div className="paywallBenefits">
+              <span>不限查看公司详情</span>
+              <span>解锁多个招聘入口</span>
+              <span>查看城市外企名单</span>
+              <span>加入外企求职群</span>
+            </div>
+            <div className="paywallActions">
+              <button className="primaryButton" onClick={unlockProTrial}>扫码/进群后临时解锁</button>
+              <button className="ghostButton" onClick={() => {
+                trackEvent('wechat_qr_open');
+                setWechatOpen(true);
+              }}>查看微信群二维码</button>
+            </div>
+          </section>
         </div>
       ) : null}
     </div>

@@ -5,6 +5,7 @@ type PagesContext = {
 
 const ALLOWED_EXACT_PATHS = new Set([
   '/',
+  '/api/track',
   '/foreign_companies_by_industry.csv',
   '/favicon.ico',
   '/robots.txt',
@@ -21,7 +22,6 @@ const SUSPICIOUS_PATHS = [
   /^\/wordpress/i,
   /^\/phpmyadmin/i,
   /^\/admin/i,
-  /^\/api\//i,
   /^\/install/i,
   /^\/setup/i,
   /^\/vendor/i,

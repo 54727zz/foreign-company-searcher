@@ -96,6 +96,9 @@ button { cursor: pointer; }
 .stat { padding: 14px; }
 .stat strong { display: block; font-size: 24px; line-height: 1; }
 .stat span { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; }
+.proStatus { padding: 14px; display: grid; gap: 5px; border-color: #b7d8d3; background: #f7fbfa; }
+.proStatus strong { font-size: 14px; }
+.proStatus span { color: var(--muted); font-size: 12px; line-height: 1.45; }
 
 .main { display: grid; gap: 18px; }
 .hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr); gap: 18px; }
@@ -261,16 +264,19 @@ dd { margin: 0; color: var(--ink); }
 .regionDetail strong { font-size: 16px; }
 .regionDetail span { color: var(--muted); font-size: 13px; }
 .regionDetail div { display: flex; flex-wrap: wrap; gap: 6px; }
-.regionDetail b {
+.regionDetail b, .regionDetail button {
   display: inline-flex;
   min-height: 26px;
   align-items: center;
   padding: 4px 8px;
+  border: 0;
   border-radius: 999px;
   background: var(--blue-soft);
   color: #1d4ed8;
   font-size: 12px;
+  font-weight: 800;
 }
+.regionDetail button.active, .regionDetail button:hover { background: #1d4ed8; color: white; }
 .regionCompanies {
   display: grid;
   gap: 8px;
@@ -361,10 +367,40 @@ dd { margin: 0; color: var(--ink); }
 }
 .wechatModalCard .closeButton { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,.92); }
 .wechatModalCard img { display: block; width: 100%; max-height: calc(88vh - 28px); object-fit: contain; border-radius: 6px; }
+.paywallModal { position: fixed; inset: 0; z-index: 85; display: grid; place-items: center; padding: 18px; }
+.paywallCard {
+  position: relative;
+  width: min(480px, 94vw);
+  padding: 24px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(23,32,51,.28);
+}
+.paywallCard .closeButton { position: absolute; top: 14px; right: 14px; }
+.paywallCard h2 { margin: 0; font-size: 28px; line-height: 1.16; padding-right: 36px; }
+.paywallCard p { margin: 12px 0 0; color: var(--muted); font-size: 14px; line-height: 1.75; }
+.priceBox {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 18px 0 0;
+  padding: 14px;
+  border: 1px solid #b7d8d3;
+  border-radius: 8px;
+  background: #f4fbfa;
+}
+.priceBox strong { color: var(--accent); font-size: 30px; line-height: 1; }
+.priceBox span { color: #475467; font-size: 12px; font-weight: 700; text-align: right; }
+.paywallBenefits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.paywallBenefits span { padding: 9px 10px; border-radius: 7px; background: #f2f4f7; color: #344054; font-size: 12px; font-weight: 700; }
+.paywallActions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
 @media (max-width: 840px) {
   .featured { grid-template-columns: 1fr; }
   .regionExplorer { grid-template-columns: 1fr; }
   .chinaMap, .chinaMap svg { min-height: 300px; }
   .wechatDock { right: 12px; bottom: 12px; width: 246px; grid-template-columns: 78px minmax(0, 1fr); }
   .wechatQr { width: 78px; height: 78px; }
+  .paywallCard { padding: 20px; }
+  .paywallBenefits { grid-template-columns: 1fr; }
 }

@@ -1,3 +1,8 @@
 name = "foreign-company-searcher"
 compatibility_date = "2026-08-08"
 pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "ANALYTICS_DB"
+database_name = "foreign_radar_analytics"
+database_id = "a0e60765-23c0-4864-803e-fd3dc21c4640"
