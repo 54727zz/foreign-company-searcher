@@ -58,7 +58,6 @@ npm run build
 ```
 
 `scripts/scrape-sap.mjs` fetches SAP Careers search results for China and outputs job title, location, source URL, and scrape time.
-Raw crawler output and frontend data files are kept locally and are not committed to GitHub.
 
 ## Deploy to Cloudflare Pages
 

@@ -58,7 +58,6 @@ npm run build
 ```
 
 `scripts/scrape-sap.mjs` 会抓取 SAP Careers 中国范围搜索结果，并输出岗位标题、地点、来源链接和抓取时间。
-抓取脚本的原始输出和前端数据文件仅保存在本地，不提交到 GitHub。
 
 ## 部署到 Cloudflare Pages
 
