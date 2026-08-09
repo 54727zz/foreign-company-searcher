@@ -96,9 +96,6 @@ button { cursor: pointer; }
 .stat { padding: 14px; }
 .stat strong { display: block; font-size: 24px; line-height: 1; }
 .stat span { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; }
-.proStatus { padding: 14px; display: grid; gap: 5px; border-color: #b7d8d3; background: #f7fbfa; }
-.proStatus strong { font-size: 14px; }
-.proStatus span { color: var(--muted); font-size: 12px; line-height: 1.45; }
 
 .main { display: grid; gap: 18px; }
 .hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr); gap: 18px; }
@@ -106,6 +103,14 @@ button { cursor: pointer; }
 .eyebrow { color: var(--accent); font-size: 12px; font-weight: 800; margin-bottom: 10px; }
 .hero h2 { margin: 0; max-width: 760px; font-size: clamp(32px, 4vw, 54px); line-height: 1.02; }
 .hero p { margin: 14px 0 0; max-width: 770px; color: var(--muted); font-size: 15px; line-height: 1.75; }
+.citySearchHero { margin-top: 22px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfe; }
+.citySearchHero label { display: block; margin-bottom: 8px; color: #475467; font-size: 12px; font-weight: 800; }
+.citySearchBox { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+.citySearchBox input { height: 42px; border: 1px solid var(--line-strong); border-radius: 7px; padding: 0 12px; outline: none; }
+.citySearchBox input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(15,118,110,.12); }
+.cityQuickLinks { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.cityQuickLinks button { min-height: 28px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: #344054; padding: 4px 9px; font-size: 12px; }
+.cityQuickLinks button:hover { border-color: var(--accent); color: #0b5c56; background: var(--accent-soft); }
 .heroActions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
 .primaryButton, .ghostButton {
   display: inline-flex;
@@ -126,6 +131,37 @@ button { cursor: pointer; }
 .barRow { display: grid; grid-template-columns: 1fr 120px 28px; align-items: center; gap: 10px; border: 0; background: transparent; padding: 0; text-align: left; color: #344054; font-size: 13px; }
 .barRow i { height: 8px; background: #eef2f6; border-radius: 99px; overflow: hidden; }
 .barRow i b { display: block; height: 100%; background: #1d4ed8; border-radius: 99px; }
+.cityAnswerPanel { padding: 20px; align-self: stretch; }
+.cityAnswerPanel h3 { margin: 0; font-size: 24px; line-height: 1.2; }
+.cityAnswerPanel p { margin: 10px 0 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+.previewCompanies { display: grid; gap: 8px; margin-top: 14px; }
+.previewCompanies button { display: grid; gap: 5px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; text-align: left; color: inherit; }
+.previewCompanies button:hover { border-color: var(--accent); background: var(--accent-soft); }
+.previewCompanies strong { font-size: 14px; }
+.previewCompanies span { color: var(--muted); font-size: 12px; }
+.emptyHint { color: var(--muted); font-size: 13px; line-height: 1.6; }
+.moreHint { margin-top: 12px; padding: 10px 11px; border-radius: 8px; background: #f4fbfa; color: #0b5c56; font-size: 13px; font-weight: 800; }
+.valueList { display: grid; gap: 8px; margin-top: 14px; }
+.valueList span { padding: 10px 11px; border-radius: 8px; background: #f2f4f7; color: #344054; font-size: 13px; font-weight: 800; }
+.trustStrip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; overflow: hidden; }
+.trustStrip div { padding: 14px 16px; border-right: 1px solid var(--line); }
+.trustStrip div:last-child { border-right: 0; }
+.trustStrip strong { display: block; font-size: 14px; }
+.trustStrip span { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.feedbackPanel { display: grid; grid-template-columns: minmax(260px, .52fr) minmax(0, 1fr); gap: 18px; padding: 18px; }
+.feedbackIntro h3 { margin: 0; font-size: 24px; line-height: 1.2; }
+.feedbackIntro p { margin: 10px 0 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+.feedbackForm { display: grid; gap: 12px; }
+.feedbackOptions { display: flex; flex-wrap: wrap; gap: 8px; }
+.feedbackOptions label { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; border: 1px solid var(--line); border-radius: 999px; background: #fff; padding: 6px 10px; color: #344054; font-size: 12px; font-weight: 700; }
+.feedbackOptions label.active { border-color: var(--accent); background: var(--accent-soft); color: #0b5c56; }
+.feedbackOptions input { margin: 0; }
+.feedbackFields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.feedbackFields input, .feedbackForm textarea { width: 100%; border: 1px solid var(--line-strong); border-radius: 7px; padding: 10px 11px; outline: none; background: #fff; color: var(--ink); }
+.feedbackForm textarea { min-height: 86px; resize: vertical; }
+.feedbackFields input:focus, .feedbackForm textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(15,118,110,.12); }
+.feedbackActions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.feedbackActions span { color: var(--muted); font-size: 13px; }
 .toolbar { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 13px; }
 .toolbar strong { color: var(--ink); }
 .toolbar select { height: 34px; border: 1px solid var(--line); border-radius: 7px; padding: 0 9px; background: white; color: var(--ink); }
@@ -175,6 +211,10 @@ dd { margin: 0; color: var(--ink); }
   .heroCopy { min-height: auto; }
   .hero h2 { font-size: 34px; }
   .barRow { grid-template-columns: 1fr 80px 28px; }
+  .citySearchBox { grid-template-columns: 1fr; }
+  .trustStrip { grid-template-columns: 1fr; }
+  .trustStrip div { border-right: 0; border-bottom: 1px solid var(--line); }
+  .trustStrip div:last-child { border-bottom: 0; }
 }
 
 .sectionHead {
@@ -367,40 +407,12 @@ dd { margin: 0; color: var(--ink); }
 }
 .wechatModalCard .closeButton { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,.92); }
 .wechatModalCard img { display: block; width: 100%; max-height: calc(88vh - 28px); object-fit: contain; border-radius: 6px; }
-.paywallModal { position: fixed; inset: 0; z-index: 85; display: grid; place-items: center; padding: 18px; }
-.paywallCard {
-  position: relative;
-  width: min(480px, 94vw);
-  padding: 24px;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 28px 80px rgba(23,32,51,.28);
-}
-.paywallCard .closeButton { position: absolute; top: 14px; right: 14px; }
-.paywallCard h2 { margin: 0; font-size: 28px; line-height: 1.16; padding-right: 36px; }
-.paywallCard p { margin: 12px 0 0; color: var(--muted); font-size: 14px; line-height: 1.75; }
-.priceBox {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 14px;
-  margin: 18px 0 0;
-  padding: 14px;
-  border: 1px solid #b7d8d3;
-  border-radius: 8px;
-  background: #f4fbfa;
-}
-.priceBox strong { color: var(--accent); font-size: 30px; line-height: 1; }
-.priceBox span { color: #475467; font-size: 12px; font-weight: 700; text-align: right; }
-.paywallBenefits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
-.paywallBenefits span { padding: 9px 10px; border-radius: 7px; background: #f2f4f7; color: #344054; font-size: 12px; font-weight: 700; }
-.paywallActions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
 @media (max-width: 840px) {
   .featured { grid-template-columns: 1fr; }
   .regionExplorer { grid-template-columns: 1fr; }
   .chinaMap, .chinaMap svg { min-height: 300px; }
   .wechatDock { right: 12px; bottom: 12px; width: 246px; grid-template-columns: 78px minmax(0, 1fr); }
   .wechatQr { width: 78px; height: 78px; }
-  .paywallCard { padding: 20px; }
-  .paywallBenefits { grid-template-columns: 1fr; }
+  .feedbackPanel { grid-template-columns: 1fr; }
+  .feedbackFields { grid-template-columns: 1fr; }
 }

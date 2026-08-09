@@ -4,7 +4,7 @@
 
 # Foreign Company Radar
 
-A React + TypeScript website for browsing multinational-company information and job data in China. The project includes company filtering, regional discovery, job recommendations, career-link aggregation, and community conversion features.
+A React + TypeScript website for browsing multinational-company information and job data in China. The project includes company filtering, regional discovery, job recommendations, career-link aggregation, and community entry features.
 
 Live demo: [https://foreign-company-searcher.pages.dev](https://foreign-company-searcher.pages.dev)
 
@@ -16,12 +16,15 @@ Live demo: [https://foreign-company-searcher.pages.dev](https://foreign-company-
 - Filter companies by industry
 - Filter companies by benefit tags
 - Search by company, city, role direction, and benefit keyword
+- Search from the homepage by city to see collected companies, industry directions, and company lists
 - View company details, recommended role directions, benefit tags, and key China cities
 - Display multiple career links for the same company, such as official sites, China sites, global applicant systems, and backup links
 - Show SAP China job recommendations with job title, location, source link, and update time
 - Discover companies by region through an interactive China-region map
 - Click a region to show its company list directly and sync the main company grid
 - Provide a WeChat job-seeker group entry in the bottom-right corner with an enlarged QR-code modal
+- Collect user feedback for requested cities, role directions, and future feature needs
+- Track lightweight interaction events through Cloudflare D1, including company detail clicks, career-link clicks, city searches, region filters, and feedback submissions
 - Support desktop and mobile browsing
 
 ## Tech Stack
@@ -31,6 +34,7 @@ Live demo: [https://foreign-company-searcher.pages.dev](https://foreign-company-
 - Vite
 - CSS
 - Cloudflare Pages
+- Cloudflare D1
 - Node.js crawler script
 
 ## Run Locally

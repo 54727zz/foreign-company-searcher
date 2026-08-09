@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 import { loadCompanies } from './lib/csv';
-import { trackEvent } from './lib/analytics';
+import { currentAnalyticsContext, trackEvent } from './lib/analytics';
 import { chinaRegions, companyMatchesRegion, jobMatchesRegion, topCitiesForRegion } from './lib/locations';
 import type { Company, JobFeed } from './types';
 
 const benefitFilters = ['五险一金', '商业保险', '补充', '股票', '混合办公', '员工折扣', '奖金', '培训'];
 const quickSearches = ['宠物', '家具', '半导体', '补充', '股票'];
-const freeCompanyViewLimit = 3;
-const proDurationMs = 7 * 24 * 60 * 60 * 1000;
-const viewStorageKey = 'foreignRadarViewedCompanies';
-const proStorageKey = 'foreignRadarProUntil';
+const popularCities = ['上海', '北京', '苏州', '大连', '成都', '武汉', '南京', '杭州', '长沙', '郑州'];
+const feedbackOptions = ['更多城市外企名单', '实时岗位更新', '福利待遇和年假信息', '外包/正式合同识别', '简历和面试经验', '按岗位推荐公司'];
 
 function splitWords(value: string): string[] {
   return value.split(';').map((item) => item.trim()).filter(Boolean);
@@ -54,10 +53,14 @@ export default function App() {
   const [sapJobs, setSapJobs] = useState<JobFeed | null>(null);
   const [selectedRegion, setSelectedRegion] = useState('全部');
   const [selectedRegionCity, setSelectedRegionCity] = useState<string | null>(null);
+  const [cityQuery, setCityQuery] = useState('');
   const [wechatOpen, setWechatOpen] = useState(false);
-  const [paywallOpen, setPaywallOpen] = useState(false);
-  const [viewedCompanies, setViewedCompanies] = useState<string[]>([]);
-  const [proUntil, setProUntil] = useState(0);
+  const [feedbackNeeds, setFeedbackNeeds] = useState<Set<string>>(new Set());
+  const [feedbackCity, setFeedbackCity] = useState('');
+  const [feedbackRole, setFeedbackRole] = useState('');
+  const [feedbackContact, setFeedbackContact] = useState('');
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     loadCompanies().then(setCompanies).catch(() => setError('公司数据加载失败，请检查 CSV 文件。'));
@@ -65,16 +68,6 @@ export default function App() {
       .then((response) => (response.ok ? response.json() : null))
       .then((feed: JobFeed | null) => setSapJobs(feed))
       .catch(() => setSapJobs(null));
-  }, []);
-
-  useEffect(() => {
-    try {
-      setViewedCompanies(JSON.parse(localStorage.getItem(viewStorageKey) ?? '[]'));
-      setProUntil(Number(localStorage.getItem(proStorageKey) ?? '0'));
-    } catch {
-      setViewedCompanies([]);
-      setProUntil(0);
-    }
   }, []);
 
   const industries = useMemo(() => [...new Set(companies.map((company) => company.industry))].sort(), [companies]);
@@ -114,6 +107,18 @@ export default function App() {
   }), [companies, sapJobs]);
 
   const maxRegionTotal = Math.max(1, ...regionStats.map((region) => region.total));
+  const cityAnswerCompanies = useMemo(() => {
+    const city = cityQuery.trim();
+    if (!city) return [];
+    return companies.filter((company) => company.primaryChinaCityFocus.includes(city));
+  }, [cityQuery, companies]);
+
+  const cityAnswerIndustries = useMemo(() => {
+    const counts = new Map<string, number>();
+    cityAnswerCompanies.forEach((company) => counts.set(company.industry, (counts.get(company.industry) ?? 0) + 1));
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+  }, [cityAnswerCompanies]);
+
   const activeRegion = regionStats.find((region) => region.id === selectedRegion) ?? null;
   const activeRegionCompanies = useMemo(() => {
     if (selectedRegion === '全部') return [];
@@ -148,31 +153,57 @@ export default function App() {
     selectRegion('全部');
   }
 
-  const hasProAccess = proUntil > Date.now();
-  const remainingFreeViews = Math.max(0, freeCompanyViewLimit - viewedCompanies.length);
-
-  function openCompany(company: Company) {
-    if (hasProAccess || viewedCompanies.includes(company.company) || viewedCompanies.length < freeCompanyViewLimit) {
-      trackEvent('company_detail_click', { company: company.company });
-      setSelected(company);
-      if (!hasProAccess && !viewedCompanies.includes(company.company)) {
-        const next = [...viewedCompanies, company.company];
-        setViewedCompanies(next);
-        localStorage.setItem(viewStorageKey, JSON.stringify(next));
-      }
-      return;
-    }
-    trackEvent('paywall_view', { company: company.company });
-    setPaywallOpen(true);
+  function searchCity(city: string) {
+    setCityQuery(city);
+    setQuery(city);
+    trackEvent('city_filter_click', { city });
+    document.getElementById('city-answer')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  function unlockProTrial() {
-    trackEvent('paywall_unlock_click');
-    const until = Date.now() + proDurationMs;
-    setProUntil(until);
-    localStorage.setItem(proStorageKey, String(until));
-    setPaywallOpen(false);
-    setWechatOpen(true);
+  function openCompany(company: Company) {
+    trackEvent('company_detail_click', { company: company.company });
+    setSelected(company);
+  }
+
+  function toggleFeedbackNeed(value: string) {
+    setFeedbackNeeds((current) => {
+      const next = new Set(current);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
+  }
+
+  async function submitFeedback(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (feedbackNeeds.size === 0 && !feedbackMessage.trim()) {
+      setFeedbackStatus('error');
+      return;
+    }
+    setFeedbackStatus('submitting');
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          featureNeeds: [...feedbackNeeds],
+          targetCity: feedbackCity,
+          targetRole: feedbackRole,
+          contact: feedbackContact,
+          message: feedbackMessage,
+          ...currentAnalyticsContext(),
+        }),
+      });
+      if (!response.ok) throw new Error('feedback-submit-failed');
+      setFeedbackStatus('success');
+      setFeedbackNeeds(new Set());
+      setFeedbackCity('');
+      setFeedbackRole('');
+      setFeedbackContact('');
+      setFeedbackMessage('');
+    } catch {
+      setFeedbackStatus('error');
+    }
   }
 
   return (
@@ -227,10 +258,6 @@ export default function App() {
             <div className="panel stat"><strong>{filtered.length}</strong><span>当前匹配</span></div>
           </section>
 
-          <section className="panel proStatus">
-            <strong>{hasProAccess ? 'Pro 已解锁' : `免费查看 ${remainingFreeViews} 家`}</strong>
-            <span>{hasProAccess ? '7 天内不限查看公司详情' : '第 4 家开始提示解锁完整外企库'}</span>
-          </section>
         </aside>
 
         <main className="main">
@@ -239,25 +266,89 @@ export default function App() {
               <div>
                 <div className="eyebrow">FOREIGN COMPANY RADAR</div>
                 <h2>找外企岗位，不再靠碰运气</h2>
-                <p>按行业、城市、福利和合同类型筛选真实外企机会，发现科技、药企、宠物食品、家具家居、半导体设备等值得关注的公司。</p>
+                <p>输入你的城市，先看身边有哪些外企、适合投什么岗位、官网招聘入口在哪里。</p>
+              </div>
+              <div className="citySearchHero" id="city-answer">
+                <label htmlFor="city-search">你想查哪个城市？</label>
+                <div className="citySearchBox">
+                  <input id="city-search" value={cityQuery} onChange={(event) => setCityQuery(event.target.value)} onKeyDown={(event) => {
+                    if (event.key === 'Enter') searchCity(cityQuery);
+                  }} placeholder="输入城市，例如南京、大连、长沙" />
+                  <button className="primaryButton" onClick={() => searchCity(cityQuery)}>查我的外企机会</button>
+                </div>
+                <div className="cityQuickLinks">
+                  {popularCities.map((city) => <button key={city} onClick={() => searchCity(city)}>{city}</button>)}
+                </div>
               </div>
               <div className="heroActions">
                 <button className="primaryButton" onClick={resetFilters}>浏览全部外企</button>
                 {quickSearches.map((item) => <button key={item} className="ghostButton" onClick={() => setQuery(item)}>{item}赛道</button>)}
               </div>
             </div>
-            <div className="panel insightPanel">
-              <h3>行业覆盖</h3>
-              <div className="bars">
-                {topIndustries.map(([name, count]) => (
-                  <button key={name} className="barRow" onClick={() => setIndustry(name)}>
-                    <span>{name}</span>
-                    <i><b style={{ width: `${Math.round((count / maxIndustryCount) * 100)}%` }} /></i>
-                    <strong>{count}</strong>
-                  </button>
+            <div className="panel cityAnswerPanel">
+              {cityQuery.trim() ? (
+                <>
+                  <div className="eyebrow">城市答案</div>
+                  <h3>{cityQuery.trim()}外企机会</h3>
+                  <p>已收录 {cityAnswerCompanies.length} 家相关外企{cityAnswerIndustries.length > 0 ? `，覆盖 ${cityAnswerIndustries.map(([name]) => name).join('、')}` : ''}。</p>
+                  <div className="previewCompanies">
+                    {cityAnswerCompanies.slice(0, 3).map((company) => (
+                      <button key={`preview-${company.company}`} onClick={() => openCompany(company)}>
+                        <strong>{company.company}</strong>
+                        <span>{company.industry}</span>
+                      </button>
+                    ))}
+                    {cityAnswerCompanies.length === 0 ? <span className="emptyHint">这个城市还在补充中，可以先进群催更。</span> : null}
+                  </div>
+                  {cityAnswerCompanies.length > 3 ? <div className="moreHint">下方列表已同步筛选，可继续查看全部 {cityAnswerCompanies.length} 家公司。</div> : null}
+                </>
+              ) : (
+                <>
+                  <h3>先查城市，再看公司</h3>
+                  <p>直接查看城市是否有收录、公司数量、行业方向和已整理的外企名单。</p>
+                  <div className="valueList">
+                    <span>138 家外企种子库</span>
+                    <span>30 个城市覆盖</span>
+                    <span>招聘入口已核验</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+
+          <section className="panel trustStrip">
+            <div><strong>全部可查</strong><span>城市数量、行业方向、公司详情和招聘入口</span></div>
+            <div><strong>持续完善</strong><span>你反馈的城市和功能会优先补充</span></div>
+            <div><strong>进群更新</strong><span>新增城市和岗位优先同步</span></div>
+          </section>
+
+          <section className="panel feedbackPanel" id="feedback">
+            <div className="feedbackIntro">
+              <div className="eyebrow">用户反馈</div>
+              <h3>你希望外企求职网站还提供什么？</h3>
+              <p>告诉我们你最想要的功能、城市和岗位方向，我们会优先补充高需求内容。</p>
+            </div>
+            <form className="feedbackForm" onSubmit={submitFeedback}>
+              <div className="feedbackOptions">
+                {feedbackOptions.map((item) => (
+                  <label key={item} className={feedbackNeeds.has(item) ? 'active' : ''}>
+                    <input type="checkbox" checked={feedbackNeeds.has(item)} onChange={() => toggleFeedbackNeed(item)} />
+                    <span>{item}</span>
+                  </label>
                 ))}
               </div>
-            </div>
+              <div className="feedbackFields">
+                <input value={feedbackCity} onChange={(event) => setFeedbackCity(event.target.value)} placeholder="你关注的城市，例如长沙/郑州/大连" />
+                <input value={feedbackRole} onChange={(event) => setFeedbackRole(event.target.value)} placeholder="你想找的岗位，例如产品/财务/供应链" />
+                <input value={feedbackContact} onChange={(event) => setFeedbackContact(event.target.value)} placeholder="微信或邮箱，可选" />
+              </div>
+              <textarea value={feedbackMessage} onChange={(event) => setFeedbackMessage(event.target.value)} placeholder="还有什么想法？比如希望增加公司评价、薪资、外包识别、简历模板等。" />
+              <div className="feedbackActions">
+                <button className="primaryButton" type="submit" disabled={feedbackStatus === 'submitting'}>{feedbackStatus === 'submitting' ? '提交中' : '提交反馈'}</button>
+                {feedbackStatus === 'success' ? <span>已收到，感谢你的建议。</span> : null}
+                {feedbackStatus === 'error' ? <span>请选择一个功能或写下你的想法。</span> : null}
+              </div>
+            </form>
           </section>
 
 
@@ -289,8 +380,8 @@ export default function App() {
           <section className="panel regionExplorer">
             <div className="regionCopy">
               <div className="eyebrow">按地区找外企</div>
-              <h3>先看区域，再进城市</h3>
-              <p>点击地图区域，快速查看当地外企公司和 SAP 在招岗位。</p>
+              <h3>地图只是入口，答案落到城市</h3>
+              <p>点击区域后选择城市，直接查看该城市外企名单和岗位线索。</p>
               <div className="regionActions">
                 <button className={`chip ${selectedRegion === '全部' ? 'active' : ''}`} onClick={() => selectRegion('全部')}>全国</button>
                 {regionStats.map((region) => (
@@ -471,7 +562,7 @@ export default function App() {
         <img className="wechatQr" src="/assets/wechat-group-qr.png" alt="外企雷达求职交流群二维码" />
         <div>
           <strong>加入外企求职群</strong>
-          <span>扫码交流城市岗位和福利线索</span>
+          <span>获取城市清单更新、岗位提醒和福利避坑线索</span>
         </div>
       </button>
       {wechatOpen ? (
@@ -481,34 +572,6 @@ export default function App() {
             <button className="closeButton" onClick={() => setWechatOpen(false)} aria-label="关闭">×</button>
             <img src="/assets/wechat-group-qr.png" alt="外企雷达求职交流群二维码" />
           </div>
-        </div>
-      ) : null}
-      {paywallOpen ? (
-        <div className="paywallModal" role="dialog" aria-modal="true" aria-label="解锁外企雷达 Pro">
-          <button className="wechatShade" onClick={() => setPaywallOpen(false)} aria-label="关闭解锁弹窗" />
-          <section className="paywallCard">
-            <button className="closeButton" onClick={() => setPaywallOpen(false)} aria-label="关闭">×</button>
-            <div className="eyebrow">FOREIGN RADAR PRO</div>
-            <h2>你今天已经查看 3 家外企</h2>
-            <p>解锁完整外企库，继续查看公司详情、招聘入口、城市名单、岗位更新和福利避坑线索。</p>
-            <div className="priceBox">
-              <strong>9.9 元</strong>
-              <span>解锁 7 天 · 当前为转化验证版</span>
-            </div>
-            <div className="paywallBenefits">
-              <span>不限查看公司详情</span>
-              <span>解锁多个招聘入口</span>
-              <span>查看城市外企名单</span>
-              <span>加入外企求职群</span>
-            </div>
-            <div className="paywallActions">
-              <button className="primaryButton" onClick={unlockProTrial}>扫码/进群后临时解锁</button>
-              <button className="ghostButton" onClick={() => {
-                trackEvent('wechat_qr_open');
-                setWechatOpen(true);
-              }}>查看微信群二维码</button>
-            </div>
-          </section>
         </div>
       ) : null}
     </div>

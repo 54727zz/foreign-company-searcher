@@ -18,8 +18,7 @@ const allowedEvents = new Set([
   'wechat_qr_open',
   'region_filter_click',
   'city_filter_click',
-  'paywall_view',
-  'paywall_unlock_click',
+  'feedback_submit',
 ]);
 
 function clean(value: unknown, maxLength = 240): string | null {

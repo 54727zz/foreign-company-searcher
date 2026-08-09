@@ -37,3 +37,10 @@ export function trackEvent(eventName: string, payload: EventPayload = {}) {
     keepalive: true,
   }).catch(() => undefined);
 }
+
+export function currentAnalyticsContext() {
+  return {
+    path: window.location.pathname,
+    sessionId: getSessionId(),
+  };
+}
