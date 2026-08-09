@@ -78,7 +78,3 @@ npx wrangler pages deploy dist --project-name foreign-company-searcher --branch 
 ├── package.json
 └── vite.config.ts
 ```
-
-## Data Files
-
-Company and job data files are kept in the local development environment for development, builds, and deployment previews. The repository does not publish these data files.

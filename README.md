@@ -78,7 +78,3 @@ npx wrangler pages deploy dist --project-name foreign-company-searcher --branch 
 ├── package.json
 └── vite.config.ts
 ```
-
-## 数据文件
-
-公司与岗位数据文件仅保存在本地环境，用于开发、构建和部署预览；仓库不公开提交这些数据文件。
