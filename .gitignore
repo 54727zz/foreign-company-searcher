@@ -12,3 +12,5 @@ yarn-error.log*
 pnpm-debug.log*
 docs/*.md
 work/
+data/jobs/
+public/jobs/sap-shanghai.json

@@ -59,6 +59,7 @@ npm run build
 ```
 
 `scripts/scrape-sap.mjs` 会抓取 SAP Careers 中国范围搜索结果，并输出岗位标题、地点、来源链接和抓取时间。
+抓取脚本的原始输出保存在本地 `data/jobs/`，该目录不提交到 GitHub；前端只读取整理后的 `public/jobs/sap-china.json`。
 
 ## 部署到 Cloudflare Pages
 
@@ -71,7 +72,6 @@ npx wrangler pages deploy dist --project-name foreign-company-searcher --branch 
 
 ```text
 .
-├── data/jobs/                 # 抓取脚本输出的岗位数据
 ├── docs/assets/homepage.png   # README 截图
 ├── public/                    # 前端静态数据
 ├── scripts/scrape-sap.mjs     # SAP 岗位抓取脚本
@@ -85,6 +85,4 @@ npx wrangler pages deploy dist --project-name foreign-company-searcher --branch 
 
 - `foreign_companies_by_industry.csv`：原始公司数据
 - `public/foreign_companies_by_industry.csv`：前端读取的公司数据
-- `data/jobs/sap-china.json`：SAP 抓取脚本输出
 - `public/jobs/sap-china.json`：前端读取的 SAP 岗位数据
-
