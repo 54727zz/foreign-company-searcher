@@ -4,7 +4,7 @@
 
 # 外企雷达
 
-一个使用 React + TypeScript 构建的外企公司与岗位信息展示网站。项目包含外企公司筛选界面，以及一个 SAP 中国岗位抓取示例。
+一个使用 React + TypeScript 构建的外企公司与岗位信息展示网站。项目提供公司筛选、地区发现、岗位推荐、招聘入口聚合和求职社群引导等功能。
 
 线上示例：[https://foreign-company-searcher.pages.dev](https://foreign-company-searcher.pages.dev)
 
@@ -16,9 +16,13 @@
 - 按行业筛选公司
 - 按福利标签筛选公司
 - 搜索公司、城市、岗位方向和福利关键词
-- 查看公司详情和官网招聘入口
-- 展示 SAP 中国岗位抓取结果
-- 支持 Cloudflare Pages 静态部署
+- 查看公司详情、适合关注岗位、福利标签和重点城市
+- 展示公司招聘入口，并支持同一家公司多个入口，例如官网、国内站、全球招聘系统和备用入口
+- 展示 SAP 中国岗位推荐，包括岗位标题、地点、来源链接和更新时间
+- 使用中国区域地图按地区发现外企，点击区域后直接显示该地区公司名单
+- 地区筛选会同步影响下方公司列表，方便从区域继续查看公司详情
+- 右下角提供外企求职群入口，点击或划过后弹出放大的微信群二维码
+- 适配桌面和移动端浏览
 
 ## 技术栈
 
@@ -49,22 +53,6 @@ npm run build
 ```
 
 构建产物会生成在 `dist/` 目录。
-
-## 更新 SAP 岗位数据
-
-```bash
-npm run scrape:sap
-npm run build
-```
-
-`scripts/scrape-sap.mjs` 会抓取 SAP Careers 中国范围搜索结果，并输出岗位标题、地点、来源链接和抓取时间。
-
-## 部署到 Cloudflare Pages
-
-```bash
-npm run build
-npx wrangler pages deploy dist --project-name foreign-company-searcher --branch main
-```
 
 ## 项目结构
 

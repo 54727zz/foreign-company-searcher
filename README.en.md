@@ -4,7 +4,7 @@
 
 # Foreign Company Radar
 
-A React + TypeScript website for browsing multinational-company information and job data in China. The project includes company filtering UI and an example SAP China job crawler.
+A React + TypeScript website for browsing multinational-company information and job data in China. The project includes company filtering, regional discovery, job recommendations, career-link aggregation, and community conversion features.
 
 Live demo: [https://foreign-company-searcher.pages.dev](https://foreign-company-searcher.pages.dev)
 
@@ -16,9 +16,13 @@ Live demo: [https://foreign-company-searcher.pages.dev](https://foreign-company-
 - Filter companies by industry
 - Filter companies by benefit tags
 - Search by company, city, role direction, and benefit keyword
-- View company details and official career links
-- Display SAP China job feed data
-- Deploy as a static site on Cloudflare Pages
+- View company details, recommended role directions, benefit tags, and key China cities
+- Display multiple career links for the same company, such as official sites, China sites, global applicant systems, and backup links
+- Show SAP China job recommendations with job title, location, source link, and update time
+- Discover companies by region through an interactive China-region map
+- Click a region to show its company list directly and sync the main company grid
+- Provide a WeChat job-seeker group entry in the bottom-right corner with an enlarged QR-code modal
+- Support desktop and mobile browsing
 
 ## Tech Stack
 
@@ -49,22 +53,6 @@ npm run build
 ```
 
 The production build is generated in `dist/`.
-
-## Update SAP Job Data
-
-```bash
-npm run scrape:sap
-npm run build
-```
-
-`scripts/scrape-sap.mjs` fetches SAP Careers search results for China and outputs job title, location, source URL, and scrape time.
-
-## Deploy to Cloudflare Pages
-
-```bash
-npm run build
-npx wrangler pages deploy dist --project-name foreign-company-searcher --branch main
-```
 
 ## Project Structure
 

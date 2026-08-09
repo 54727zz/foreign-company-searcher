@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { loadCompanies } from './lib/csv';
+import { chinaRegions, companyMatchesRegion, jobMatchesRegion, topCitiesForRegion } from './lib/locations';
 import type { Company, JobFeed } from './types';
 
 const benefitFilters = ['五险一金', '商业保险', '补充', '股票', '混合办公', '员工折扣', '奖金', '培训'];
@@ -24,6 +25,19 @@ function companyText(company: Company): string {
   return Object.values(company).flat().join(' ').toLowerCase();
 }
 
+function splitRecruitingUrls(value: string): string[] {
+  return value.split(';').map((item) => item.trim()).filter(Boolean);
+}
+
+function linkLabel(url: string, index: number): string {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    return index === 0 ? `主入口 · ${host}` : `备用入口 · ${host}`;
+  } catch {
+    return index === 0 ? '主入口' : '备用入口';
+  }
+}
+
 export default function App() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [query, setQuery] = useState('');
@@ -33,6 +47,8 @@ export default function App() {
   const [sortBy, setSortBy] = useState('company');
   const [error, setError] = useState<string | null>(null);
   const [sapJobs, setSapJobs] = useState<JobFeed | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState('全部');
+  const [wechatOpen, setWechatOpen] = useState(false);
 
   useEffect(() => {
     loadCompanies().then(setCompanies).catch(() => setError('公司数据加载失败，请检查 CSV 文件。'));
@@ -48,6 +64,7 @@ export default function App() {
     const normalized = query.trim().toLowerCase();
     return companies
       .filter((company) => industry === '全部' || company.industry === industry)
+      .filter((company) => selectedRegion === '全部' || companyMatchesRegion(company, selectedRegion))
       .filter((company) => [...benefits].every((benefit) => company.benefitOrFilterTags.includes(benefit)))
       .filter((company) => !normalized || companyText(company).includes(normalized))
       .sort((a, b) => {
@@ -55,7 +72,7 @@ export default function App() {
         if (sortBy === 'city') return a.primaryChinaCityFocus.localeCompare(b.primaryChinaCityFocus, 'zh-Hans-CN');
         return a.company.localeCompare(b.company, 'en');
       });
-  }, [companies, industry, benefits, query, sortBy]);
+  }, [companies, industry, benefits, query, selectedRegion, sortBy]);
 
   const topIndustries = useMemo(() => {
     const counts = new Map<string, number>();
@@ -64,6 +81,25 @@ export default function App() {
   }, [companies]);
 
   const maxIndustryCount = topIndustries[0]?.[1] ?? 1;
+
+  const regionStats = useMemo(() => chinaRegions.map((region) => {
+    const companyCount = companies.filter((company) => companyMatchesRegion(company, region.id)).length;
+    const jobCount = sapJobs?.jobs.filter((job) => jobMatchesRegion(job, region.id)).length ?? 0;
+    return {
+      ...region,
+      companyCount,
+      jobCount,
+      total: companyCount + jobCount,
+      topCities: topCitiesForRegion(companies, sapJobs?.jobs ?? [], region.id).slice(0, 5),
+    };
+  }), [companies, sapJobs]);
+
+  const maxRegionTotal = Math.max(1, ...regionStats.map((region) => region.total));
+  const activeRegion = regionStats.find((region) => region.id === selectedRegion) ?? null;
+  const activeRegionCompanies = useMemo(() => {
+    if (selectedRegion === '全部') return [];
+    return companies.filter((company) => companyMatchesRegion(company, selectedRegion)).slice(0, 10);
+  }, [companies, selectedRegion]);
 
   function toggleBenefit(value: string) {
     setBenefits((current) => {
@@ -78,6 +114,7 @@ export default function App() {
     setIndustry('全部');
     setBenefits(new Set());
     setQuery('');
+    setSelectedRegion('全部');
   }
 
   return (
@@ -92,7 +129,7 @@ export default function App() {
         </div>
         <nav className="nav" aria-label="产品导航">
           <button className="active">公司库</button>
-          <button>岗位雷达</button>
+          <button onClick={() => document.getElementById('job-radar')?.scrollIntoView({ behavior: 'smooth' })}>岗位雷达</button>
           <button>福利情报</button>
           <button>投稿</button>
         </nav>
@@ -162,7 +199,7 @@ export default function App() {
 
 
           {sapJobs ? (
-            <section className="panel featured">
+            <section className="panel featured" id="job-radar">
               <div className="featuredCopy">
                 <div className="eyebrow">今日推荐</div>
                 <h3>SAP 中国正在招聘</h3>
@@ -185,6 +222,74 @@ export default function App() {
               </div>
             </section>
           ) : null}
+
+          <section className="panel regionExplorer">
+            <div className="regionCopy">
+              <div className="eyebrow">按地区找外企</div>
+              <h3>先看区域，再进城市</h3>
+              <p>点击地图区域，快速查看当地外企公司和 SAP 在招岗位。</p>
+              <div className="regionActions">
+                <button className={`chip ${selectedRegion === '全部' ? 'active' : ''}`} onClick={() => setSelectedRegion('全部')}>全国</button>
+                {regionStats.map((region) => (
+                  <button key={region.id} className={`chip ${selectedRegion === region.id ? 'active' : ''}`} onClick={() => setSelectedRegion(region.id)}>
+                    {region.name} {region.total}
+                  </button>
+                ))}
+              </div>
+              {activeRegion ? (
+                <div className="regionDetail">
+                  <strong>{activeRegion.name}</strong>
+                  <span>{activeRegion.companyCount} 家公司 · {activeRegion.jobCount} 个 SAP 岗位</span>
+                  <div>
+                    {activeRegion.topCities.length > 0 ? activeRegion.topCities.map(([city, count]) => <b key={city}>{city} {count}</b>) : <b>等待补充城市数据</b>}
+                  </div>
+                </div>
+              ) : null}
+              {activeRegion ? (
+                <div className="regionCompanies">
+                  <div className="regionCompaniesHead">
+                    <strong>{activeRegion.name}外企名单</strong>
+                    <span>{activeRegionCompanies.length} / {activeRegion.companyCount}</span>
+                  </div>
+                  {activeRegionCompanies.length > 0 ? activeRegionCompanies.map((company) => (
+                    <button key={`${activeRegion.id}-${company.company}`} onClick={() => setSelected(company)}>
+                      <span>{company.company}</span>
+                      <small>{company.industry} · {company.primaryChinaCityFocus}</small>
+                    </button>
+                  )) : <p>这个区域还没有结构化公司数据，可以先订阅地区更新。</p>}
+                </div>
+              ) : null}
+            </div>
+            <div className="chinaMap" aria-label="中国区域外企分布图">
+              <svg viewBox="0 0 680 660" role="img">
+                {regionStats.map((region) => {
+                  const intensity = 0.18 + (region.total / maxRegionTotal) * 0.72;
+                  const isActive = selectedRegion === region.id;
+                  return (
+                    <g key={region.id}>
+                      <path
+                        d={region.shape}
+                        className={isActive ? 'active' : ''}
+                        fill={`rgba(15, 118, 110, ${intensity})`}
+                        onClick={() => setSelectedRegion(region.id)}
+                      />
+                    </g>
+                  );
+                })}
+                {regionStats.map((region) => {
+                  const match = region.shape.match(/M(\d+) (\d+)/);
+                  const x = match ? Number(match[1]) + 54 : 100;
+                  const y = match ? Number(match[2]) + 72 : 100;
+                  return (
+                    <g key={`${region.id}-label`} className="mapLabel" onClick={() => setSelectedRegion(region.id)}>
+                      <text x={x} y={y}>{region.name}</text>
+                      <text x={x} y={y + 24}>{region.companyCount} 公司 / {region.jobCount} 岗</text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          </section>
 
           <section className="panel toolbar">
             <div><strong>{filtered.length}</strong> 家公司匹配当前筛选</div>
@@ -280,9 +385,31 @@ export default function App() {
             ) : null}
             <section className="detailSection">
               <h3>招聘入口</h3>
-              <a className="primaryButton linkButton" href={selected.recruitingUrl} target="_blank" rel="noreferrer">打开官网招聘</a>
+              <div className="careerLinks">
+                {splitRecruitingUrls(selected.recruitingUrl).map((url, index) => (
+                  <a className={index === 0 ? 'primaryButton linkButton' : 'ghostButton linkButton'} href={url} target="_blank" rel="noreferrer" key={url}>
+                    {linkLabel(url, index)}
+                  </a>
+                ))}
+              </div>
             </section>
           </aside>
+        </div>
+      ) : null}
+      <button className="wechatDock" aria-label="加入外企求职微信群" onClick={() => setWechatOpen(true)} onMouseEnter={() => setWechatOpen(true)}>
+        <img className="wechatQr" src="/assets/wechat-group-qr.png" alt="外企雷达求职交流群二维码" />
+        <div>
+          <strong>加入外企求职群</strong>
+          <span>扫码交流城市岗位和福利线索</span>
+        </div>
+      </button>
+      {wechatOpen ? (
+        <div className="wechatModal" role="dialog" aria-modal="true" aria-label="外企雷达求职交流群二维码">
+          <button className="wechatShade" onClick={() => setWechatOpen(false)} aria-label="关闭微信群二维码" />
+          <div className="wechatModalCard">
+            <button className="closeButton" onClick={() => setWechatOpen(false)} aria-label="关闭">×</button>
+            <img src="/assets/wechat-group-qr.png" alt="外企雷达求职交流群二维码" />
+          </div>
         </div>
       ) : null}
     </div>

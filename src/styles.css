@@ -157,6 +157,7 @@ dl div { display: grid; grid-template-columns: 96px 1fr; gap: 12px; font-size: 1
 dt { color: #475467; font-weight: 700; }
 dd { margin: 0; color: var(--ink); }
 .linkButton { width: fit-content; }
+.careerLinks { display: flex; flex-wrap: wrap; gap: 10px; }
 
 @media (max-width: 1180px) {
   .companyGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -238,6 +239,132 @@ dd { margin: 0; color: var(--ink); }
 .miniJob:hover { border-color: var(--line-strong); box-shadow: 0 8px 22px rgba(23,32,51,.07); }
 .miniJob strong { font-size: 13px; line-height: 1.35; }
 .miniJob span { color: var(--muted); font-size: 12px; }
+
+.regionExplorer {
+  display: grid;
+  grid-template-columns: minmax(300px, .72fr) minmax(0, 1fr);
+  gap: 18px;
+  padding: 18px;
+}
+.regionCopy h3 { margin: 0; font-size: 24px; line-height: 1.15; }
+.regionCopy p { margin: 10px 0 0; color: var(--muted); line-height: 1.7; font-size: 14px; }
+.regionActions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; }
+.regionDetail {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+.regionDetail strong { font-size: 16px; }
+.regionDetail span { color: var(--muted); font-size: 13px; }
+.regionDetail div { display: flex; flex-wrap: wrap; gap: 6px; }
+.regionDetail b {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: #1d4ed8;
+  font-size: 12px;
+}
+.regionCompanies {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.regionCompaniesHead { display: flex; align-items: center; justify-content: space-between; }
+.regionCompaniesHead strong { font-size: 14px; }
+.regionCompaniesHead span { color: var(--muted); font-size: 12px; }
+.regionCompanies button {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  color: inherit;
+}
+.regionCompanies button:hover { border-color: var(--accent); background: var(--accent-soft); }
+.regionCompanies button span { font-weight: 800; font-size: 13px; }
+.regionCompanies button small { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.regionCompanies p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.chinaMap {
+  min-height: 360px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef7f6 100%);
+  overflow: hidden;
+}
+.chinaMap svg { width: 100%; height: 100%; min-height: 360px; display: block; }
+.chinaMap path {
+  stroke: #ffffff;
+  stroke-width: 5;
+  cursor: pointer;
+  transition: transform .15s ease, filter .15s ease, stroke .15s ease;
+  transform-origin: center;
+}
+.chinaMap path:hover, .chinaMap path.active {
+  filter: drop-shadow(0 12px 18px rgba(23,32,51,.16));
+  stroke: #0f766e;
+  transform: translateY(-3px);
+}
+.mapLabel { pointer-events: none; }
+.mapLabel text:first-child { fill: var(--ink); font-size: 21px; font-weight: 800; }
+.mapLabel text:last-child { fill: #344054; font-size: 13px; font-weight: 700; }
+
+.wechatDock {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 30;
+  width: 284px;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 16px 36px rgba(23,32,51,.14);
+  backdrop-filter: blur(10px);
+  color: inherit;
+  text-align: left;
+}
+.wechatDock strong { display: block; font-size: 16px; line-height: 1.25; }
+.wechatDock span { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.wechatQr {
+  width: 96px;
+  height: 96px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  object-fit: cover;
+  object-position: center 58%;
+}
+.wechatModal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 18px; }
+.wechatShade { position: absolute; inset: 0; width: 100%; border: 0; background: rgba(23, 32, 51, .38); }
+.wechatModalCard {
+  position: relative;
+  width: min(430px, 92vw);
+  max-height: 88vh;
+  padding: 14px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(23,32,51,.28);
+}
+.wechatModalCard .closeButton { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,.92); }
+.wechatModalCard img { display: block; width: 100%; max-height: calc(88vh - 28px); object-fit: contain; border-radius: 6px; }
 @media (max-width: 840px) {
   .featured { grid-template-columns: 1fr; }
+  .regionExplorer { grid-template-columns: 1fr; }
+  .chinaMap, .chinaMap svg { min-height: 300px; }
+  .wechatDock { right: 12px; bottom: 12px; width: 246px; grid-template-columns: 78px minmax(0, 1fr); }
+  .wechatQr { width: 78px; height: 78px; }
 }
