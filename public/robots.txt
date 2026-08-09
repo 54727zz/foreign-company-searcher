@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /jobs/
+Disallow: /*.json$
+Disallow: /*.csv$
+
+Sitemap: https://foreign-company-searcher.pages.dev/sitemap.xml
