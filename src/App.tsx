@@ -19,9 +19,21 @@ type AdminSummary = {
   topCities: AdminRow[];
   topRegions: AdminRow[];
   topCareerLinks: AdminRow[];
+  topSavedCompanies: AdminRow[];
+  topAppliedCompanies: AdminRow[];
+  highIntentSessions: AdminRow[];
+  recentLeads: AdminRow[];
   recentFeedback: AdminRow[];
   dailyEvents: AdminRow[];
 };
+
+const intentMeta = {
+  applied: { eventName: 'company_applied_click', label: '我已投递' },
+  saved: { eventName: 'company_saved_click', label: '收藏' },
+  later: { eventName: 'company_later_click', label: '稍后投' },
+} as const;
+
+type CompanyIntent = keyof typeof intentMeta;
 
 function splitWords(value: string): string[] {
   return value.split(';').map((item) => item.trim()).filter(Boolean);
@@ -122,7 +134,11 @@ function AdminDashboard() {
             <AdminTable title="热门城市" rows={data.topCities} columns={['city', 'count']} empty="还没有城市点击。" />
             <AdminTable title="热门公司" rows={data.topCompanies} columns={['company', 'count']} empty="还没有公司点击。" />
             <AdminTable title="地区筛选" rows={data.topRegions} columns={['region', 'count']} empty="还没有地区点击。" />
-            <AdminTable title="招聘入口点击" rows={data.topCareerLinks} columns={['company', 'target_url', 'count']} empty="还没有招聘入口点击。" />
+            <AdminTable title="招聘入口点击排行榜" rows={data.topCareerLinks} columns={['company', 'target_url', 'count']} empty="还没有招聘入口点击。" />
+            <AdminTable title="收藏排行榜" rows={data.topSavedCompanies} columns={['company', 'count']} empty="还没有收藏点击。" />
+            <AdminTable title="已投递排行榜" rows={data.topAppliedCompanies} columns={['company', 'count']} empty="还没有已投递点击。" />
+            <AdminTable title="留资用户列表" rows={data.recentLeads} columns={['created_at', 'contact', 'intent', 'company', 'city', 'country']} empty="还没有留资用户。" />
+            <AdminTable title="高意向 session 数" rows={data.highIntentSessions} columns={['count']} empty="还没有高意向 session。" />
             <AdminTable title="事件总览" rows={data.eventCounts} columns={['event_name', 'count']} empty="还没有事件。" />
             <AdminTable title="最近 14 天事件" rows={data.dailyEvents} columns={['day', 'event_name', 'count']} empty="还没有趋势数据。" />
           </section>
@@ -178,6 +194,10 @@ export default function App() {
   const [feedbackContact, setFeedbackContact] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [leadIntent, setLeadIntent] = useState<CompanyIntent | null>(null);
+  const [leadCompany, setLeadCompany] = useState<Company | null>(null);
+  const [leadContact, setLeadContact] = useState('');
+  const [leadStatus, setLeadStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     loadCompanies().then(setCompanies).catch(() => setError('公司数据加载失败，请检查 CSV 文件。'));
@@ -289,6 +309,40 @@ export default function App() {
       else next.add(value);
       return next;
     });
+  }
+
+  function openLeadPrompt(intent: CompanyIntent, company: Company) {
+    trackEvent(intentMeta[intent].eventName, { company: company.company, city: company.primaryChinaCityFocus });
+    setLeadIntent(intent);
+    setLeadCompany(company);
+    setLeadStatus('idle');
+  }
+
+  async function submitLead(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!leadContact.trim() || !leadIntent || !leadCompany) {
+      setLeadStatus('error');
+      return;
+    }
+    setLeadStatus('submitting');
+    try {
+      const response = await fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          contact: leadContact,
+          intent: leadIntent,
+          company: leadCompany.company,
+          city: leadCompany.primaryChinaCityFocus,
+          ...currentAnalyticsContext(),
+        }),
+      });
+      if (!response.ok) throw new Error('lead-submit-failed');
+      setLeadStatus('success');
+      setLeadContact('');
+    } catch {
+      setLeadStatus('error');
+    }
   }
 
   async function submitFeedback(event: FormEvent<HTMLFormElement>) {
@@ -633,6 +687,15 @@ export default function App() {
                 <div><dt>备注</dt><dd>{selected.notes}</dd></div>
               </dl>
             </section>
+            <section className="detailSection">
+              <h3>投递记录</h3>
+              <p>点一下记录你的求职动作，留下微信或邮箱后可以保存投递清单。</p>
+              <div className="intentActions">
+                <button onClick={() => openLeadPrompt('applied', selected)}>我已投递</button>
+                <button onClick={() => openLeadPrompt('saved', selected)}>收藏</button>
+                <button onClick={() => openLeadPrompt('later', selected)}>稍后投</button>
+              </div>
+            </section>
             {selected.company === 'SAP' && sapJobs ? (
               <section className="detailSection">
                 <div className="sectionHead">
@@ -670,6 +733,24 @@ export default function App() {
               </div>
             </section>
           </aside>
+        </div>
+      ) : null}
+      {leadIntent && leadCompany ? (
+        <div className="leadModal" role="dialog" aria-modal="true" aria-label="保存投递记录">
+          <button className="wechatShade" onClick={() => setLeadIntent(null)} aria-label="关闭保存投递记录" />
+          <form className="leadCard" onSubmit={submitLead}>
+            <button className="closeButton" type="button" onClick={() => setLeadIntent(null)} aria-label="关闭">×</button>
+            <div className="eyebrow">保存求职记录</div>
+            <h2>{intentMeta[leadIntent].label} · {leadCompany.company}</h2>
+            <p>登录功能还在路上。现在可以先留下微信或邮箱，我们帮你保存投递记录，后续更新城市清单和岗位提醒时也能同步给你。</p>
+            <input value={leadContact} onChange={(event) => setLeadContact(event.target.value)} placeholder="微信或邮箱" />
+            <div className="leadActions">
+              <button className="primaryButton" type="submit" disabled={leadStatus === 'submitting'}>{leadStatus === 'submitting' ? '保存中' : '保存记录'}</button>
+              <button className="ghostButton" type="button" onClick={() => setLeadIntent(null)}>暂时不用</button>
+            </div>
+            {leadStatus === 'success' ? <span className="leadMessage">已保存，之后可以按这个线索继续完善投递清单。</span> : null}
+            {leadStatus === 'error' ? <span className="leadMessage error">请填写微信或邮箱。</span> : null}
+          </form>
         </div>
       ) : null}
       <button className="wechatDock" aria-label="加入外企求职微信群" onClick={() => {

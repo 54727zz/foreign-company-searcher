@@ -50,7 +50,7 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
     return json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
-  const [eventCounts, topCompanies, topCities, topRegions, topCareerLinks, recentFeedback, dailyEvents] = await Promise.all([
+  const [eventCounts, topCompanies, topCities, topRegions, topCareerLinks, topSavedCompanies, topAppliedCompanies, highIntentSessions, recentLeads, recentFeedback, dailyEvents] = await Promise.all([
     all(env.ANALYTICS_DB.prepare(
       `SELECT event_name, COUNT(*) AS count
        FROM analytics_events
@@ -91,6 +91,40 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
        LIMIT 20`,
     )),
     all(env.ANALYTICS_DB.prepare(
+      `SELECT company, COUNT(*) AS count
+       FROM analytics_events
+       WHERE event_name = 'company_saved_click' AND company IS NOT NULL
+       GROUP BY company
+       ORDER BY count DESC
+       LIMIT 20`,
+    )),
+    all(env.ANALYTICS_DB.prepare(
+      `SELECT company, COUNT(*) AS count
+       FROM analytics_events
+       WHERE event_name = 'company_applied_click' AND company IS NOT NULL
+       GROUP BY company
+       ORDER BY count DESC
+       LIMIT 20`,
+    )),
+    all(env.ANALYTICS_DB.prepare(
+      `SELECT COUNT(*) AS count
+       FROM (
+         SELECT session_id
+         FROM analytics_events
+         WHERE session_id IS NOT NULL
+         GROUP BY session_id
+         HAVING SUM(CASE WHEN event_name = 'city_filter_click' THEN 1 ELSE 0 END) > 0
+            AND SUM(CASE WHEN event_name = 'company_detail_click' THEN 1 ELSE 0 END) > 0
+            AND SUM(CASE WHEN event_name = 'career_link_click' THEN 1 ELSE 0 END) > 0
+       )`,
+    )),
+    all(env.ANALYTICS_DB.prepare(
+      `SELECT id, contact, intent, company, city, country, created_at
+       FROM user_leads
+       ORDER BY id DESC
+       LIMIT 30`,
+    )),
+    all(env.ANALYTICS_DB.prepare(
       `SELECT id, feature_needs, target_city, target_role, contact, message, country, created_at
        FROM user_feedback
        ORDER BY id DESC
@@ -114,6 +148,10 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
     topCities,
     topRegions,
     topCareerLinks,
+    topSavedCompanies,
+    topAppliedCompanies,
+    highIntentSessions,
+    recentLeads,
     recentFeedback,
     dailyEvents,
   });

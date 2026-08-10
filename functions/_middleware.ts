@@ -8,6 +8,7 @@ const ALLOWED_EXACT_PATHS = new Set([
   '/admin',
   '/api/admin/summary',
   '/api/feedback',
+  '/api/lead',
   '/api/track',
   '/foreign_companies_by_industry.csv',
   '/favicon.ico',

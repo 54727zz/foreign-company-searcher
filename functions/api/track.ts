@@ -19,6 +19,10 @@ const allowedEvents = new Set([
   'region_filter_click',
   'city_filter_click',
   'feedback_submit',
+  'company_applied_click',
+  'company_saved_click',
+  'company_later_click',
+  'lead_submit',
 ]);
 
 function clean(value: unknown, maxLength = 240): string | null {
