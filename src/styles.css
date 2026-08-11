@@ -291,6 +291,8 @@ dd { margin: 0; color: var(--ink); }
 .leadActions { display: flex; flex-wrap: wrap; gap: 10px; }
 .leadMessage { color: #0b5c56; font-size: 13px; font-weight: 800; }
 .leadMessage.error { color: #be123c; }
+.authCard input { width: 100%; }
+.inlineSuccess { display: inline-flex; margin-top: 10px; color: #0b5c56; font-size: 13px; font-weight: 800; }
 
 @media (max-width: 1180px) {
   .companyGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

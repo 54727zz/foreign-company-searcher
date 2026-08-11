@@ -22,6 +22,8 @@ type AdminSummary = {
   topSavedCompanies: AdminRow[];
   topAppliedCompanies: AdminRow[];
   highIntentSessions: AdminRow[];
+  recentUsers: AdminRow[];
+  recentUserIntents: AdminRow[];
   recentLeads: AdminRow[];
   recentFeedback: AdminRow[];
   dailyEvents: AdminRow[];
@@ -34,6 +36,8 @@ const intentMeta = {
 } as const;
 
 type CompanyIntent = keyof typeof intentMeta;
+
+type AuthUser = { id: number; phone: string };
 
 function splitWords(value: string): string[] {
   return value.split(';').map((item) => item.trim()).filter(Boolean);
@@ -137,6 +141,8 @@ function AdminDashboard() {
             <AdminTable title="招聘入口点击排行榜" rows={data.topCareerLinks} columns={['company', 'target_url', 'count']} empty="还没有招聘入口点击。" />
             <AdminTable title="收藏排行榜" rows={data.topSavedCompanies} columns={['company', 'count']} empty="还没有收藏点击。" />
             <AdminTable title="已投递排行榜" rows={data.topAppliedCompanies} columns={['company', 'count']} empty="还没有已投递点击。" />
+            <AdminTable title="注册用户" rows={data.recentUsers} columns={['id', 'phone', 'created_at', 'last_login_at']} empty="还没有注册用户。" />
+            <AdminTable title="用户投递清单动作" rows={data.recentUserIntents} columns={['created_at', 'phone', 'intent', 'company', 'city']} empty="还没有账号绑定的投递动作。" />
             <AdminTable title="留资用户列表" rows={data.recentLeads} columns={['created_at', 'contact', 'intent', 'company', 'city', 'country']} empty="还没有留资用户。" />
             <AdminTable title="高意向 session 数" rows={data.highIntentSessions} columns={['count']} empty="还没有高意向 session。" />
             <AdminTable title="事件总览" rows={data.eventCounts} columns={['event_name', 'count']} empty="还没有事件。" />
@@ -194,10 +200,14 @@ export default function App() {
   const [feedbackContact, setFeedbackContact] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
-  const [leadIntent, setLeadIntent] = useState<CompanyIntent | null>(null);
-  const [leadCompany, setLeadCompany] = useState<Company | null>(null);
-  const [leadContact, setLeadContact] = useState('');
-  const [leadStatus, setLeadStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
+  const [authPhone, setAuthPhone] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authStatus, setAuthStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [authMessage, setAuthMessage] = useState('');
+  const [pendingIntent, setPendingIntent] = useState<{ intent: CompanyIntent; company: Company } | null>(null);
 
   useEffect(() => {
     loadCompanies().then(setCompanies).catch(() => setError('公司数据加载失败，请检查 CSV 文件。'));
@@ -205,6 +215,18 @@ export default function App() {
       .then((response) => (response.ok ? response.json() : null))
       .then((feed: JobFeed | null) => setSapJobs(feed))
       .catch(() => setSapJobs(null));
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('foreignRadarAuthToken');
+    if (!token) return;
+    fetch('/api/auth/me', { headers: { authorization: `Bearer ${token}` } })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (payload?.ok) setAuthUser(payload.user);
+        else localStorage.removeItem('foreignRadarAuthToken');
+      })
+      .catch(() => undefined);
   }, []);
 
   const industries = useMemo(() => [...new Set(companies.map((company) => company.industry))].sort(), [companies]);
@@ -311,38 +333,73 @@ export default function App() {
     });
   }
 
-  function openLeadPrompt(intent: CompanyIntent, company: Company) {
-    trackEvent(intentMeta[intent].eventName, { company: company.company, city: company.primaryChinaCityFocus });
-    setLeadIntent(intent);
-    setLeadCompany(company);
-    setLeadStatus('idle');
+  async function saveCompanyIntent(intent: CompanyIntent, company: Company, token = localStorage.getItem('foreignRadarAuthToken')) {
+    if (!token) throw new Error('missing-token');
+    const response = await fetch('/api/user/intent', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        intent,
+        company: company.company,
+        city: company.primaryChinaCityFocus,
+        ...currentAnalyticsContext(),
+      }),
+    });
+    if (!response.ok) throw new Error('intent-save-failed');
   }
 
-  async function submitLead(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!leadContact.trim() || !leadIntent || !leadCompany) {
-      setLeadStatus('error');
+  async function openAuthForIntent(intent: CompanyIntent, company: Company) {
+    setPendingIntent({ intent, company });
+    setAuthMessage('');
+    setAuthStatus('idle');
+    if (!authUser) {
+      setAuthMode('register');
+      setAuthOpen(true);
       return;
     }
-    setLeadStatus('submitting');
     try {
-      const response = await fetch('/api/lead', {
+      await saveCompanyIntent(intent, company);
+      setAuthMessage(`${intentMeta[intent].label}已保存到你的投递清单。`);
+      setAuthStatus('success');
+    } catch {
+      setAuthOpen(true);
+      setAuthStatus('error');
+      setAuthMessage('登录状态已过期，请重新登录后保存。');
+    }
+  }
+
+  async function submitAuth(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setAuthStatus('submitting');
+    setAuthMessage('');
+    try {
+      const response = await fetch(`/api/auth/${authMode}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          contact: leadContact,
-          intent: leadIntent,
-          company: leadCompany.company,
-          city: leadCompany.primaryChinaCityFocus,
-          ...currentAnalyticsContext(),
-        }),
+        body: JSON.stringify({ phone: authPhone, password: authPassword, ...currentAnalyticsContext() }),
       });
-      if (!response.ok) throw new Error('lead-submit-failed');
-      setLeadStatus('success');
-      setLeadContact('');
-    } catch {
-      setLeadStatus('error');
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.error ?? 'auth-failed');
+      localStorage.setItem('foreignRadarAuthToken', payload.token);
+      setAuthUser(payload.user);
+      if (pendingIntent) await saveCompanyIntent(pendingIntent.intent, pendingIntent.company, payload.token);
+      setAuthStatus('success');
+      setAuthMessage(pendingIntent ? `${intentMeta[pendingIntent.intent].label}已保存到你的投递清单。` : '登录成功。');
+      setAuthPassword('');
+      setTimeout(() => setAuthOpen(false), 900);
+    } catch (authError) {
+      const message = authError instanceof Error ? authError.message : '';
+      setAuthStatus('error');
+      if (message === 'phone-exists') setAuthMessage('这个手机号已经注册过，请切换到登录。');
+      else if (message === 'invalid-phone') setAuthMessage('请输入 11 位中国大陆手机号。');
+      else if (message === 'invalid-password') setAuthMessage('密码至少 6 位。');
+      else setAuthMessage('登录或注册失败，请检查手机号和密码。');
     }
+  }
+
+  function logout() {
+    localStorage.removeItem('foreignRadarAuthToken');
+    setAuthUser(null);
   }
 
   async function submitFeedback(event: FormEvent<HTMLFormElement>) {
@@ -392,6 +449,11 @@ export default function App() {
           <button onClick={() => document.getElementById('job-radar')?.scrollIntoView({ behavior: 'smooth' })}>岗位雷达</button>
           <button>福利情报</button>
           <button>投稿</button>
+          {authUser ? <button onClick={logout}>{authUser.phone.slice(0, 3)}****{authUser.phone.slice(-4)}</button> : <button onClick={() => {
+            setPendingIntent(null);
+            setAuthMode('register');
+            setAuthOpen(true);
+          }}>登录</button>}
         </nav>
       </header>
 
@@ -689,12 +751,13 @@ export default function App() {
             </section>
             <section className="detailSection">
               <h3>投递记录</h3>
-              <p>点一下记录你的求职动作，留下微信或邮箱后可以保存投递清单。</p>
+              <p>{authUser ? '记录你的求职动作，后续可以继续完善投递清单。' : '登录后可以保存收藏、稍后投和已投递公司。'}</p>
               <div className="intentActions">
-                <button onClick={() => openLeadPrompt('applied', selected)}>我已投递</button>
-                <button onClick={() => openLeadPrompt('saved', selected)}>收藏</button>
-                <button onClick={() => openLeadPrompt('later', selected)}>稍后投</button>
+                <button onClick={() => openAuthForIntent('applied', selected)}>我已投递</button>
+                <button onClick={() => openAuthForIntent('saved', selected)}>收藏</button>
+                <button onClick={() => openAuthForIntent('later', selected)}>稍后投</button>
               </div>
+              {authStatus === 'success' && authMessage && !authOpen ? <span className="inlineSuccess">{authMessage}</span> : null}
             </section>
             {selected.company === 'SAP' && sapJobs ? (
               <section className="detailSection">
@@ -735,21 +798,21 @@ export default function App() {
           </aside>
         </div>
       ) : null}
-      {leadIntent && leadCompany ? (
-        <div className="leadModal" role="dialog" aria-modal="true" aria-label="保存投递记录">
-          <button className="wechatShade" onClick={() => setLeadIntent(null)} aria-label="关闭保存投递记录" />
-          <form className="leadCard" onSubmit={submitLead}>
-            <button className="closeButton" type="button" onClick={() => setLeadIntent(null)} aria-label="关闭">×</button>
-            <div className="eyebrow">保存求职记录</div>
-            <h2>{intentMeta[leadIntent].label} · {leadCompany.company}</h2>
-            <p>登录功能还在路上。现在可以先留下微信或邮箱，我们帮你保存投递记录，后续更新城市清单和岗位提醒时也能同步给你。</p>
-            <input value={leadContact} onChange={(event) => setLeadContact(event.target.value)} placeholder="微信或邮箱" />
+      {authOpen ? (
+        <div className="leadModal" role="dialog" aria-modal="true" aria-label="登录保存投递记录">
+          <button className="wechatShade" onClick={() => setAuthOpen(false)} aria-label="关闭登录弹窗" />
+          <form className="leadCard authCard" onSubmit={submitAuth}>
+            <button className="closeButton" type="button" onClick={() => setAuthOpen(false)} aria-label="关闭">×</button>
+            <div className="eyebrow">{authMode === 'register' ? '创建账号' : '账号登录'}</div>
+            <h2>{pendingIntent ? `${intentMeta[pendingIntent.intent].label} · ${pendingIntent.company.company}` : '登录外企雷达'}</h2>
+            <p>用手机号和密码登录后，可以保存收藏、稍后投、已投递公司，后续也能继续查看自己的外企投递清单。</p>
+            <input value={authPhone} onChange={(event) => setAuthPhone(event.target.value)} placeholder="手机号" inputMode="tel" />
+            <input value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} placeholder="设置或输入密码，至少 6 位" type="password" />
             <div className="leadActions">
-              <button className="primaryButton" type="submit" disabled={leadStatus === 'submitting'}>{leadStatus === 'submitting' ? '保存中' : '保存记录'}</button>
-              <button className="ghostButton" type="button" onClick={() => setLeadIntent(null)}>暂时不用</button>
+              <button className="primaryButton" type="submit" disabled={authStatus === 'submitting'}>{authStatus === 'submitting' ? '处理中' : authMode === 'register' ? '注册并保存' : '登录并保存'}</button>
+              <button className="ghostButton" type="button" onClick={() => setAuthMode(authMode === 'register' ? 'login' : 'register')}>{authMode === 'register' ? '已有账号，去登录' : '没有账号，去注册'}</button>
             </div>
-            {leadStatus === 'success' ? <span className="leadMessage">已保存，之后可以按这个线索继续完善投递清单。</span> : null}
-            {leadStatus === 'error' ? <span className="leadMessage error">请填写微信或邮箱。</span> : null}
+            {authMessage ? <span className={`leadMessage ${authStatus === 'error' ? 'error' : ''}`}>{authMessage}</span> : null}
           </form>
         </div>
       ) : null}

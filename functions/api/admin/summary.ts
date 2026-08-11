@@ -50,7 +50,7 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
     return json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
-  const [eventCounts, topCompanies, topCities, topRegions, topCareerLinks, topSavedCompanies, topAppliedCompanies, highIntentSessions, recentLeads, recentFeedback, dailyEvents] = await Promise.all([
+  const [eventCounts, topCompanies, topCities, topRegions, topCareerLinks, topSavedCompanies, topAppliedCompanies, highIntentSessions, recentUsers, recentUserIntents, recentLeads, recentFeedback, dailyEvents] = await Promise.all([
     all(env.ANALYTICS_DB.prepare(
       `SELECT event_name, COUNT(*) AS count
        FROM analytics_events
@@ -119,6 +119,23 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
        )`,
     )),
     all(env.ANALYTICS_DB.prepare(
+      `SELECT id, phone, created_at, last_login_at
+       FROM app_users
+       ORDER BY id DESC
+       LIMIT 30`,
+    )),
+    all(env.ANALYTICS_DB.prepare(
+      `SELECT user_company_intents.created_at AS created_at,
+              app_users.phone AS phone,
+              user_company_intents.intent AS intent,
+              user_company_intents.company AS company,
+              user_company_intents.city AS city
+       FROM user_company_intents
+       JOIN app_users ON app_users.id = user_company_intents.user_id
+       ORDER BY user_company_intents.id DESC
+       LIMIT 30`,
+    )),
+    all(env.ANALYTICS_DB.prepare(
       `SELECT id, contact, intent, company, city, country, created_at
        FROM user_leads
        ORDER BY id DESC
@@ -151,6 +168,8 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
     topSavedCompanies,
     topAppliedCompanies,
     highIntentSessions,
+    recentUsers,
+    recentUserIntents,
     recentLeads,
     recentFeedback,
     dailyEvents,

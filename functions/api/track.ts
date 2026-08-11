@@ -23,6 +23,8 @@ const allowedEvents = new Set([
   'company_saved_click',
   'company_later_click',
   'lead_submit',
+  'user_register',
+  'user_login',
 ]);
 
 function clean(value: unknown, maxLength = 240): string | null {
