@@ -24,9 +24,26 @@ export function normalizePhone(value: unknown): string | null {
   return phone;
 }
 
-export function validatePassword(value: unknown): string | null {
+const weakPasswords = new Set([
+  'password1',
+  'password123',
+  'abc12345',
+  'abcd1234',
+  'qwerty123',
+  'admin123',
+  '11111111',
+  '12345678',
+  '123456789',
+]);
+
+export function validatePassword(value: unknown, phone?: string | null): string | null {
   const password = typeof value === 'string' ? value : '';
-  if (password.length < 6 || password.length > 72) return null;
+  const lower = password.toLowerCase();
+  if (password.length < 8 || password.length > 20) return null;
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return null;
+  if (/^\d+$/.test(password)) return null;
+  if (weakPasswords.has(lower)) return null;
+  if (phone && password.includes(phone)) return null;
   return password;
 }
 

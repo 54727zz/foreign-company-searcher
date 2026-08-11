@@ -225,6 +225,33 @@ button { cursor: pointer; }
 .adminTableCard td { color: #344054; max-width: 320px; overflow-wrap: anywhere; }
 .adminTableCard tr:last-child td { border-bottom: 0; }
 .adminUpdated { max-width: 1380px; margin: 14px auto 0; color: var(--muted); font-size: 12px; }
+.mePage { min-height: 100vh; padding: 26px; background: var(--bg); }
+.meHeader {
+  max-width: 1180px;
+  margin: 0 auto 18px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+.meHeader h1 { margin: 0; font-size: 34px; line-height: 1.1; }
+.meHeader p { margin: 9px 0 0; color: var(--muted); line-height: 1.65; }
+.meHeaderActions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.meStats { max-width: 1180px; margin: 0 auto 18px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.meGrid { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.meAuthPanel { max-width: 520px; margin: 0 auto; padding: 20px; }
+.meAuthPanel h2 { margin: 0; font-size: 24px; }
+.meAuthPanel p { margin: 10px 0 0; color: var(--muted); line-height: 1.7; }
+.meAuthForm { display: grid; gap: 11px; margin-top: 16px; }
+.meAuthForm input { height: 40px; border: 1px solid var(--line-strong); border-radius: 7px; padding: 0 11px; outline: none; }
+.meAuthForm input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(15,118,110,.12); }
+.intentList { padding: 16px; display: grid; gap: 10px; align-content: start; }
+.intentList h2 { margin: 0; font-size: 16px; }
+.intentList p { margin: 0; color: var(--muted); font-size: 13px; }
+.intentItem { display: grid; gap: 5px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfe; }
+.intentItem strong { font-size: 14px; }
+.intentItem span { color: var(--muted); font-size: 12px; line-height: 1.45; }
 .toolbar { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 13px; }
 .toolbar strong { color: var(--ink); }
 .toolbar select { height: 34px; border: 1px solid var(--line); border-radius: 7px; padding: 0 9px; background: white; color: var(--ink); }
@@ -315,6 +342,11 @@ dd { margin: 0; color: var(--ink); }
   .adminHero, .adminStats, .adminGrid { grid-template-columns: 1fr; }
   .adminLogin { grid-template-columns: 1fr; }
   .adminHero h1 { font-size: 30px; }
+  .mePage { padding: 16px; }
+  .meHeader { display: grid; }
+  .meHeader h1 { font-size: 28px; }
+  .meHeaderActions { justify-content: flex-start; }
+  .meStats, .meGrid { grid-template-columns: 1fr; }
 }
 
 .sectionHead {

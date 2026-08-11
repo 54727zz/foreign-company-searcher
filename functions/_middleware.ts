@@ -6,11 +6,13 @@ type PagesContext = {
 const ALLOWED_EXACT_PATHS = new Set([
   '/',
   '/admin',
+  '/me',
   '/api/admin/summary',
   '/api/auth/login',
   '/api/auth/me',
   '/api/auth/register',
   '/api/user/intent',
+  '/api/user/profile',
   '/api/feedback',
   '/api/lead',
   '/api/track',

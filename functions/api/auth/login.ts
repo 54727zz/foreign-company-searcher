@@ -12,7 +12,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   const phone = normalizePhone(payload.phone);
-  const password = validatePassword(payload.password);
+  const password = typeof payload.password === 'string' ? payload.password : null;
   if (!phone || !password) return Response.json({ ok: false, error: 'invalid-credentials' }, { status: 401 });
 
   const user = await env.ANALYTICS_DB.prepare('SELECT id, phone, password_hash, password_salt FROM app_users WHERE phone = ? LIMIT 1').bind(phone).first<UserRecord>();

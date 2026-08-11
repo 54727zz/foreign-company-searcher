@@ -38,6 +38,16 @@ const intentMeta = {
 type CompanyIntent = keyof typeof intentMeta;
 
 type AuthUser = { id: number; phone: string };
+type ProfileIntent = { intent: CompanyIntent; company: string; city: string | null; created_at: string };
+type UserProfile = { user: AuthUser; intents: ProfileIntent[]; stats: AdminRow[]; generatedAt: string };
+
+function maskPhone(phone: string): string {
+  return `${phone.slice(0, 3)}****${phone.slice(-4)}`;
+}
+
+function passwordHint(): string {
+  return '密码 8-20 位，需包含字母和数字，不能使用手机号或常见弱密码。';
+}
 
 function splitWords(value: string): string[] {
   return value.split(';').map((item) => item.trim()).filter(Boolean);
@@ -69,6 +79,136 @@ function linkLabel(url: string, index: number): string {
   } catch {
     return index === 0 ? '主入口' : '备用入口';
   }
+}
+
+function MePage() {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
+
+  async function loadProfile(token = localStorage.getItem('foreignRadarAuthToken')) {
+    if (!token) {
+      setStatus('error');
+      return;
+    }
+    setStatus('loading');
+    try {
+      const response = await fetch('/api/user/profile', { headers: { authorization: `Bearer ${token}` } });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.error ?? 'profile-failed');
+      setProfile(payload);
+      setStatus('ready');
+      setMessage('');
+    } catch {
+      localStorage.removeItem('foreignRadarAuthToken');
+      setProfile(null);
+      setStatus('error');
+    }
+  }
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  async function submitMeAuth(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStatus('loading');
+    setMessage('');
+    try {
+      const response = await fetch(`/api/auth/${authMode}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ phone, password, ...currentAnalyticsContext() }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.error ?? 'auth-failed');
+      localStorage.setItem('foreignRadarAuthToken', payload.token);
+      setPassword('');
+      await loadProfile(payload.token);
+    } catch (error) {
+      const code = error instanceof Error ? error.message : '';
+      setStatus('error');
+      if (code === 'phone-exists') setMessage('这个手机号已经注册过，请切换到登录。');
+      else if (code === 'invalid-password') setMessage(passwordHint());
+      else if (code === 'invalid-phone') setMessage('请输入 11 位中国大陆手机号。');
+      else setMessage('登录或注册失败，请检查手机号和密码。');
+    }
+  }
+
+  function logoutMe() {
+    localStorage.removeItem('foreignRadarAuthToken');
+    setProfile(null);
+    setStatus('error');
+  }
+
+  const grouped = {
+    saved: profile?.intents.filter((item) => item.intent === 'saved') ?? [],
+    later: profile?.intents.filter((item) => item.intent === 'later') ?? [],
+    applied: profile?.intents.filter((item) => item.intent === 'applied') ?? [],
+  };
+
+  return (
+    <main className="mePage">
+      <header className="meHeader panel">
+        <div>
+          <div className="eyebrow">MY RADAR</div>
+          <h1>我的外企投递清单</h1>
+          <p>{profile ? `${maskPhone(profile.user.phone)} · 已保存 ${profile.intents.length} 条求职记录` : '登录后查看收藏、稍后投和已投递公司。'}</p>
+        </div>
+        <div className="meHeaderActions">
+          <button className="ghostButton" onClick={() => { window.location.href = '/'; }}>返回首页</button>
+          {profile ? <button className="ghostButton" onClick={logoutMe}>退出登录</button> : null}
+        </div>
+      </header>
+
+      {profile ? (
+        <>
+          <section className="meStats">
+            <div className="panel adminStat"><strong>{grouped.saved.length}</strong><span>收藏公司</span></div>
+            <div className="panel adminStat"><strong>{grouped.later.length}</strong><span>稍后投</span></div>
+            <div className="panel adminStat"><strong>{grouped.applied.length}</strong><span>已投递</span></div>
+          </section>
+          <section className="meGrid">
+            <IntentList title="收藏的外企" rows={grouped.saved} empty="还没有收藏公司。" />
+            <IntentList title="稍后投" rows={grouped.later} empty="还没有稍后投公司。" />
+            <IntentList title="已投递" rows={grouped.applied} empty="还没有已投递记录。" />
+          </section>
+          <p className="adminUpdated">更新时间：{new Date(profile.generatedAt).toLocaleString('zh-CN')}</p>
+        </>
+      ) : (
+        <section className="panel meAuthPanel">
+          <h2>{authMode === 'login' ? '登录账号' : '注册账号'}</h2>
+          <p>注册后可以跨设备保存收藏、稍后投和已投递公司。</p>
+          <form className="meAuthForm" onSubmit={submitMeAuth}>
+            <input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="手机号" inputMode="tel" />
+            <input value={password} onChange={(event) => setPassword(event.target.value)} placeholder={authMode === 'register' ? passwordHint() : '输入密码'} type="password" />
+            <div className="leadActions">
+              <button className="primaryButton" type="submit" disabled={status === 'loading'}>{status === 'loading' ? '处理中' : authMode === 'login' ? '登录' : '注册'}</button>
+              <button className="ghostButton" type="button" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}>{authMode === 'login' ? '没有账号，去注册' : '已有账号，去登录'}</button>
+            </div>
+            {message ? <span className="leadMessage error">{message}</span> : null}
+          </form>
+        </section>
+      )}
+    </main>
+  );
+}
+
+function IntentList({ title, rows, empty }: { title: string; rows: ProfileIntent[]; empty: string }) {
+  return (
+    <section className="panel intentList">
+      <h2>{title}</h2>
+      {rows.length ? rows.map((row, index) => (
+        <div key={`${row.intent}-${row.company}-${row.created_at}-${index}`} className="intentItem">
+          <strong>{row.company}</strong>
+          <span>{row.city || '城市待补充'} · {new Date(row.created_at).toLocaleString('zh-CN')}</span>
+        </div>
+      )) : <p>{empty}</p>}
+    </section>
+  );
 }
 
 function AdminDashboard() {
@@ -181,6 +321,7 @@ function AdminTable({ title, rows, columns, empty }: { title: string; rows: Admi
 
 export default function App() {
   if (window.location.pathname === '/admin') return <AdminDashboard />;
+  if (window.location.pathname === '/me') return <MePage />;
 
   const [companies, setCompanies] = useState<Company[]>([]);
   const [query, setQuery] = useState('');
@@ -392,7 +533,7 @@ export default function App() {
       setAuthStatus('error');
       if (message === 'phone-exists') setAuthMessage('这个手机号已经注册过，请切换到登录。');
       else if (message === 'invalid-phone') setAuthMessage('请输入 11 位中国大陆手机号。');
-      else if (message === 'invalid-password') setAuthMessage('密码至少 6 位。');
+      else if (message === 'invalid-password') setAuthMessage(passwordHint());
       else setAuthMessage('登录或注册失败，请检查手机号和密码。');
     }
   }
@@ -449,7 +590,7 @@ export default function App() {
           <button onClick={() => document.getElementById('job-radar')?.scrollIntoView({ behavior: 'smooth' })}>岗位雷达</button>
           <button>福利情报</button>
           <button>投稿</button>
-          {authUser ? <button onClick={logout}>{authUser.phone.slice(0, 3)}****{authUser.phone.slice(-4)}</button> : <button onClick={() => {
+          {authUser ? <button onClick={() => { window.location.href = '/me'; }}>{maskPhone(authUser.phone)}</button> : <button onClick={() => {
             setPendingIntent(null);
             setAuthMode('register');
             setAuthOpen(true);
@@ -807,7 +948,7 @@ export default function App() {
             <h2>{pendingIntent ? `${intentMeta[pendingIntent.intent].label} · ${pendingIntent.company.company}` : '登录外企雷达'}</h2>
             <p>用手机号和密码登录后，可以保存收藏、稍后投、已投递公司，后续也能继续查看自己的外企投递清单。</p>
             <input value={authPhone} onChange={(event) => setAuthPhone(event.target.value)} placeholder="手机号" inputMode="tel" />
-            <input value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} placeholder="设置或输入密码，至少 6 位" type="password" />
+            <input value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} placeholder={authMode === 'register' ? passwordHint() : '输入密码'} type="password" />
             <div className="leadActions">
               <button className="primaryButton" type="submit" disabled={authStatus === 'submitting'}>{authStatus === 'submitting' ? '处理中' : authMode === 'register' ? '注册并保存' : '登录并保存'}</button>
               <button className="ghostButton" type="button" onClick={() => setAuthMode(authMode === 'register' ? 'login' : 'register')}>{authMode === 'register' ? '已有账号，去登录' : '没有账号，去注册'}</button>

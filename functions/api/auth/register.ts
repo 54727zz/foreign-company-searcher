@@ -12,7 +12,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   const phone = normalizePhone(payload.phone);
-  const password = validatePassword(payload.password);
+  const password = validatePassword(payload.password, phone);
   if (!phone) return Response.json({ ok: false, error: 'invalid-phone' }, { status: 400 });
   if (!password) return Response.json({ ok: false, error: 'invalid-password' }, { status: 400 });
 
