@@ -50,7 +50,7 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
     return json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
-  const [eventCounts, topCompanies, topCities, topRegions, topCareerLinks, topSavedCompanies, topAppliedCompanies, highIntentSessions, recentUsers, recentUserIntents, recentLeads, recentFeedback, dailyEvents] = await Promise.all([
+  const [eventCounts, topCompanies, topCities, topRegions, topCareerLinks, topSavedCompanies, topAppliedCompanies, highIntentSessions, recentUsers, recentUserIntents, recentFeedback, dailyEvents] = await Promise.all([
     all(env.ANALYTICS_DB.prepare(
       `SELECT event_name, COUNT(*) AS count
        FROM analytics_events
@@ -136,12 +136,6 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
        LIMIT 30`,
     )),
     all(env.ANALYTICS_DB.prepare(
-      `SELECT id, contact, intent, company, city, country, created_at
-       FROM user_leads
-       ORDER BY id DESC
-       LIMIT 30`,
-    )),
-    all(env.ANALYTICS_DB.prepare(
       `SELECT id, feature_needs, target_city, target_role, contact, message, country, created_at
        FROM user_feedback
        ORDER BY id DESC
@@ -170,7 +164,6 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
     highIntentSessions,
     recentUsers,
     recentUserIntents,
-    recentLeads,
     recentFeedback,
     dailyEvents,
   });

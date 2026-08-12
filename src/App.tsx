@@ -24,7 +24,6 @@ type AdminSummary = {
   highIntentSessions: AdminRow[];
   recentUsers: AdminRow[];
   recentUserIntents: AdminRow[];
-  recentLeads: AdminRow[];
   recentFeedback: AdminRow[];
   dailyEvents: AdminRow[];
 };
@@ -283,7 +282,6 @@ function AdminDashboard() {
             <AdminTable title="已投递排行榜" rows={data.topAppliedCompanies} columns={['company', 'count']} empty="还没有已投递点击。" />
             <AdminTable title="注册用户" rows={data.recentUsers} columns={['id', 'phone', 'created_at', 'last_login_at']} empty="还没有注册用户。" />
             <AdminTable title="用户投递清单动作" rows={data.recentUserIntents} columns={['created_at', 'phone', 'intent', 'company', 'city']} empty="还没有账号绑定的投递动作。" />
-            <AdminTable title="留资用户列表" rows={data.recentLeads} columns={['created_at', 'contact', 'intent', 'company', 'city', 'country']} empty="还没有留资用户。" />
             <AdminTable title="高意向 session 数" rows={data.highIntentSessions} columns={['count']} empty="还没有高意向 session。" />
             <AdminTable title="事件总览" rows={data.eventCounts} columns={['event_name', 'count']} empty="还没有事件。" />
             <AdminTable title="最近 14 天事件" rows={data.dailyEvents} columns={['day', 'event_name', 'count']} empty="还没有趋势数据。" />

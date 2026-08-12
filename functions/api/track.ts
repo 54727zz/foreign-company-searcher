@@ -22,7 +22,6 @@ const allowedEvents = new Set([
   'company_applied_click',
   'company_saved_click',
   'company_later_click',
-  'lead_submit',
   'user_register',
   'user_login',
 ]);
