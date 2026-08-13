@@ -31,6 +31,38 @@ Do not claim that every scraped item is production-quality. Treat crawl output i
 
 Prefer recording crawl status over pretending a dynamic site was successfully parsed.
 
+## Priority 1: Make Job Quality Stable
+
+When the user says to improve job crawling, do **not** keep blindly adding more companies first. The first priority is turning noisy crawl leads into reliable, user-facing jobs.
+
+Work in this order:
+
+1. **Keep SAP trusted and fresh.** Refresh SAP regularly because it already has a dedicated parser and good China coverage.
+2. **Segment existing companies by recruiting platform.** Use the local company dataset and current crawl report to group companies by `source_platform`, especially Workday, Phenom/Search Jobs, SmartRecruiters, Oracle Cloud Recruiting, Lever, Greenhouse, and Eightfold.
+3. **Build one platform parser at a time.** Start with the platform that covers the most reachable companies. Do not solve every company individually unless it is a strategic high-value company.
+4. **Validate parser output before import.** A job is displayable only when it has a real title, direct or near-direct job URL, credible company, and China city/location or explicit China scope.
+5. **Show uncertain results conservatively.** If output is generic or unverified, keep it as internal crawl status or "岗位线索", not as confirmed jobs.
+6. **Only then expand coverage.** After one parser reaches acceptable quality, import that trusted subset and move to the next platform.
+
+Recommended first parser roadmap:
+
+1. Workday / `myworkdayjobs.com`: many multinational companies use it, and it often exposes structured job data or predictable requisition pages.
+2. Phenom/Search Jobs pages: common for large enterprises, often supports location/search result pagination.
+3. SmartRecruiters: usually has structured public APIs or predictable posting pages.
+4. Oracle Cloud Recruiting CandidateExperience: high-value but more dynamic; handle after easier platforms.
+5. Lever and Greenhouse: usually straightforward, but may cover fewer target companies in this dataset.
+
+Quality gates for public display:
+
+- Title must not match generic navigation labels such as `Search Jobs`, `View Jobs`, `Careers`, `Learn More`, `Talent Community`, `Job Alert`, `Saved Jobs`, or privacy/cookie pages.
+- URL must point to a job detail page or a platform posting record, not only a company career landing page.
+- Location must be China-specific. Prefer city extraction from structured fields; fallback to URL/title/page text only when clearly reliable.
+- Deduplicate by stable job key and job hash.
+- Spot-check at least 5 records or 10% of a parser run, whichever is larger, before remote import.
+- For each imported parser batch, report sample companies, job counts, known limitations, and whether results are trusted or still review-only.
+
+Do not scrape LinkedIn aggressively. Use LinkedIn only as manual inspiration or a normal user-facing outbound link because anti-bot and compliance risk is high.
+
 ## Standard Workflow
 
 1. Go to the project directory:

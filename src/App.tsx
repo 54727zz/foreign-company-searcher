@@ -8,6 +8,9 @@ import type { Company, JobFeed } from './types';
 const benefitFilters = ['五险一金', '商业保险', '补充', '股票', '混合办公', '员工折扣', '奖金', '培训'];
 const quickSearches = ['宠物', '家具', '半导体', '补充', '股票'];
 const popularCities = ['上海', '北京', '苏州', '大连', '成都', '武汉', '南京', '杭州', '长沙', '郑州'];
+const subscriptionCityOptions = ['上海', '苏州', '大连', '长沙'];
+const subscriptionCompanyOptions = ['SAP', 'Nike', 'IKEA'];
+const subscriptionKeywordOptions = ['财务', '供应链', '产品', '管培生'];
 const feedbackOptions = ['更多城市外企名单', '实时岗位更新', '福利待遇和年假信息', '外包/正式合同识别', '简历和面试经验', '按岗位推荐公司'];
 
 type AdminRow = Record<string, string | number | null>;
@@ -29,6 +32,7 @@ type AdminSummary = {
   dailyEvents: AdminRow[];
   jobSources: AdminRow[];
   jobCityCounts: AdminRow[];
+  topSubscriptions: AdminRow[];
 };
 
 const intentMeta = {
@@ -41,7 +45,9 @@ type CompanyIntent = keyof typeof intentMeta;
 
 type AuthUser = { id: number; phone: string };
 type ProfileIntent = { intent: CompanyIntent; company: string; city: string | null; created_at: string };
-type UserProfile = { user: AuthUser; intents: ProfileIntent[]; stats: AdminRow[]; generatedAt: string };
+type UserSubscription = { subscription_type: 'city' | 'company' | 'keyword'; value: string; created_at: string };
+type WatchedJob = { job_key: string; company: string; title: string; city: string | null; location: string | null; source_platform: string | null; source_url: string; scraped_at: string };
+type UserProfile = { user: AuthUser; intents: ProfileIntent[]; stats: AdminRow[]; subscriptions: UserSubscription[]; watchedJobs: WatchedJob[]; generatedAt: string };
 
 function maskPhone(phone: string): string {
   return `${phone.slice(0, 3)}****${phone.slice(-4)}`;
@@ -90,6 +96,10 @@ function MePage() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [subscriptionCities, setSubscriptionCities] = useState<Set<string>>(new Set(subscriptionCityOptions));
+  const [subscriptionCompanies, setSubscriptionCompanies] = useState<Set<string>>(new Set(subscriptionCompanyOptions));
+  const [subscriptionKeywords, setSubscriptionKeywords] = useState<Set<string>>(new Set(subscriptionKeywordOptions));
+  const [subscriptionStatus, setSubscriptionStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
   async function loadProfile(token = localStorage.getItem('foreignRadarAuthToken')) {
     if (!token) {
@@ -102,6 +112,12 @@ function MePage() {
       const payload = await response.json();
       if (!response.ok || !payload.ok) throw new Error(payload.error ?? 'profile-failed');
       setProfile(payload);
+      const nextCities = new Set<string>((payload.subscriptions ?? []).filter((item: UserSubscription) => item.subscription_type === 'city').map((item: UserSubscription) => item.value));
+      const nextCompanies = new Set<string>((payload.subscriptions ?? []).filter((item: UserSubscription) => item.subscription_type === 'company').map((item: UserSubscription) => item.value));
+      const nextKeywords = new Set<string>((payload.subscriptions ?? []).filter((item: UserSubscription) => item.subscription_type === 'keyword').map((item: UserSubscription) => item.value));
+      setSubscriptionCities(nextCities.size ? nextCities : new Set(subscriptionCityOptions));
+      setSubscriptionCompanies(nextCompanies.size ? nextCompanies : new Set(subscriptionCompanyOptions));
+      setSubscriptionKeywords(nextKeywords.size ? nextKeywords : new Set(subscriptionKeywordOptions));
       setStatus('ready');
       setMessage('');
     } catch {
@@ -152,6 +168,39 @@ function MePage() {
     applied: profile?.intents.filter((item) => item.intent === 'applied') ?? [],
   };
 
+  function toggleSubscription(type: 'city' | 'company' | 'keyword', value: string) {
+    const setter = type === 'city' ? setSubscriptionCities : type === 'company' ? setSubscriptionCompanies : setSubscriptionKeywords;
+    setter((current) => {
+      const next = new Set(current);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
+  }
+
+  async function saveSubscriptions() {
+    const token = localStorage.getItem('foreignRadarAuthToken');
+    if (!token) return;
+    setSubscriptionStatus('saving');
+    try {
+      const response = await fetch('/api/user/subscriptions', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          cities: [...subscriptionCities],
+          companies: [...subscriptionCompanies],
+          keywords: [...subscriptionKeywords],
+        }),
+      });
+      if (!response.ok) throw new Error('save-failed');
+      trackEvent('subscription_save');
+      setSubscriptionStatus('success');
+      await loadProfile(token);
+    } catch {
+      setSubscriptionStatus('error');
+    }
+  }
+
   return (
     <main className="mePage">
       <header className="meHeader panel">
@@ -172,6 +221,35 @@ function MePage() {
             <div className="panel adminStat"><strong>{grouped.saved.length}</strong><span>收藏公司</span></div>
             <div className="panel adminStat"><strong>{grouped.later.length}</strong><span>稍后投</span></div>
             <div className="panel adminStat"><strong>{grouped.applied.length}</strong><span>已投递</span></div>
+          </section>
+          <section className="panel subscriptionPanel">
+            <div className="sectionHead">
+              <div>
+                <div className="eyebrow">JOB SUBSCRIPTION</div>
+                <h2>岗位订阅</h2>
+              </div>
+              <button className="primaryButton" onClick={saveSubscriptions} disabled={subscriptionStatus === 'saving'}>{subscriptionStatus === 'saving' ? '保存中' : '保存订阅'}</button>
+            </div>
+            <SubscriptionPicker title="关注城市" options={subscriptionCityOptions} selected={subscriptionCities} onToggle={(value) => toggleSubscription('city', value)} />
+            <SubscriptionPicker title="关注公司" options={subscriptionCompanyOptions} selected={subscriptionCompanies} onToggle={(value) => toggleSubscription('company', value)} />
+            <SubscriptionPicker title="岗位关键词" options={subscriptionKeywordOptions} selected={subscriptionKeywords} onToggle={(value) => toggleSubscription('keyword', value)} />
+            {subscriptionStatus === 'success' ? <span className="inlineSuccess">已保存，会在这里汇总你关注的岗位更新。</span> : null}
+            {subscriptionStatus === 'error' ? <span className="leadMessage error">订阅保存失败，请稍后再试。</span> : null}
+          </section>
+          <section className="panel watchedJobsPanel">
+            <div className="sectionHead">
+              <div>
+                <div className="eyebrow">WATCHED JOBS</div>
+                <h2>你关注的岗位更新</h2>
+              </div>
+              <span>{profile.watchedJobs.length} 条</span>
+            </div>
+            {profile.watchedJobs.length ? profile.watchedJobs.slice(0, 12).map((job) => (
+              <a className="watchedJobItem" href={job.source_url} target="_blank" rel="noreferrer" key={job.job_key}>
+                <strong>{job.title}</strong>
+                <span>{job.company} · {job.city || job.location || '地点待确认'} · {job.source_platform || 'Company Careers'}</span>
+              </a>
+            )) : <p>保存订阅后，这里会显示匹配到的岗位。当前岗位池还在扩充中。</p>}
           </section>
           <section className="meGrid">
             <IntentList title="收藏的外企" rows={grouped.saved} empty="还没有收藏公司。" />
@@ -210,6 +288,19 @@ function IntentList({ title, rows, empty }: { title: string; rows: ProfileIntent
         </div>
       )) : <p>{empty}</p>}
     </section>
+  );
+}
+
+function SubscriptionPicker({ title, options, selected, onToggle }: { title: string; options: string[]; selected: Set<string>; onToggle: (value: string) => void }) {
+  return (
+    <div className="subscriptionGroup">
+      <strong>{title}</strong>
+      <div>
+        {options.map((option) => (
+          <button type="button" className={selected.has(option) ? 'active' : ''} onClick={() => onToggle(option)} key={option}>{option}</button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -283,6 +374,7 @@ function AdminDashboard() {
             <AdminTable title="招聘入口点击排行榜" rows={data.topCareerLinks} columns={['company', 'target_url', 'count']} empty="还没有招聘入口点击。" />
             <AdminTable title="岗位抓取来源" rows={data.jobSources} columns={['company', 'source_platform', 'scope', 'status', 'last_success_at', 'last_job_count', 'last_error']} empty="还没有岗位抓取来源。" />
             <AdminTable title="岗位城市分布" rows={data.jobCityCounts} columns={['company', 'city', 'count']} empty="还没有岗位城市数据。" />
+            <AdminTable title="订阅排行榜" rows={data.topSubscriptions} columns={['subscription_type', 'value', 'count']} empty="还没有用户订阅。" />
             <AdminTable title="收藏排行榜" rows={data.topSavedCompanies} columns={['company', 'count']} empty="还没有收藏点击。" />
             <AdminTable title="已投递排行榜" rows={data.topAppliedCompanies} columns={['company', 'count']} empty="还没有已投递点击。" />
             <AdminTable title="注册用户" rows={data.recentUsers} columns={['id', 'phone', 'created_at', 'last_login_at']} empty="还没有注册用户。" />

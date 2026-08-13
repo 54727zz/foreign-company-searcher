@@ -58,7 +58,7 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
     return json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
-  const [eventCounts, topCompanies, topCities, topRegions, topCareerLinks, topSavedCompanies, topAppliedCompanies, highIntentSessions, recentUsers, recentUserIntents, recentFeedback, dailyEvents, jobSources, jobCityCounts] = await Promise.all([
+  const [eventCounts, topCompanies, topCities, topRegions, topCareerLinks, topSavedCompanies, topAppliedCompanies, highIntentSessions, recentUsers, recentUserIntents, recentFeedback, dailyEvents, jobSources, jobCityCounts, topSubscriptions] = await Promise.all([
     all(env.ANALYTICS_DB.prepare(
       `SELECT event_name, COUNT(*) AS count
        FROM analytics_events
@@ -171,6 +171,13 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
        ORDER BY count DESC
        LIMIT 30`,
     )),
+    tryAll(env.ANALYTICS_DB.prepare(
+      `SELECT subscription_type, value, COUNT(*) AS count
+       FROM user_subscriptions
+       GROUP BY subscription_type, value
+       ORDER BY count DESC, subscription_type ASC, value ASC
+       LIMIT 50`,
+    )),
   ]);
 
   return json({
@@ -190,6 +197,7 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
     dailyEvents,
     jobSources,
     jobCityCounts,
+    topSubscriptions,
   });
 };
 

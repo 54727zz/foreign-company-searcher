@@ -83,6 +83,20 @@ CREATE TABLE IF NOT EXISTS user_company_intents (
 CREATE INDEX IF NOT EXISTS idx_user_company_intents_created_at ON user_company_intents(created_at);
 CREATE INDEX IF NOT EXISTS idx_user_company_intents_user_id ON user_company_intents(user_id);
 
+CREATE TABLE IF NOT EXISTS user_subscriptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  subscription_type TEXT NOT NULL,
+  value TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, subscription_type, value),
+  FOREIGN KEY(user_id) REFERENCES app_users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_id ON user_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_type_value ON user_subscriptions(subscription_type, value);
+
 CREATE TABLE IF NOT EXISTS job_sources (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   company TEXT NOT NULL UNIQUE,

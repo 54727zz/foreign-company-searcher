@@ -13,6 +13,7 @@ const ALLOWED_EXACT_PATHS = new Set([
   '/api/auth/register',
   '/api/user/intent',
   '/api/user/profile',
+  '/api/user/subscriptions',
   '/api/feedback',
   '/api/jobs',
   '/api/job-summary',

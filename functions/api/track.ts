@@ -24,6 +24,7 @@ const allowedEvents = new Set([
   'company_later_click',
   'user_register',
   'user_login',
+  'subscription_save',
 ]);
 
 function clean(value: unknown, maxLength = 240): string | null {
