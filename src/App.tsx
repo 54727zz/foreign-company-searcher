@@ -26,6 +26,8 @@ type AdminSummary = {
   recentUserIntents: AdminRow[];
   recentFeedback: AdminRow[];
   dailyEvents: AdminRow[];
+  jobSources: AdminRow[];
+  jobCityCounts: AdminRow[];
 };
 
 const intentMeta = {
@@ -278,6 +280,8 @@ function AdminDashboard() {
             <AdminTable title="热门公司" rows={data.topCompanies} columns={['company', 'count']} empty="还没有公司点击。" />
             <AdminTable title="地区筛选" rows={data.topRegions} columns={['region', 'count']} empty="还没有地区点击。" />
             <AdminTable title="招聘入口点击排行榜" rows={data.topCareerLinks} columns={['company', 'target_url', 'count']} empty="还没有招聘入口点击。" />
+            <AdminTable title="岗位抓取来源" rows={data.jobSources} columns={['company', 'source_platform', 'scope', 'status', 'last_success_at', 'last_job_count', 'last_error']} empty="还没有岗位抓取来源。" />
+            <AdminTable title="岗位城市分布" rows={data.jobCityCounts} columns={['company', 'city', 'count']} empty="还没有岗位城市数据。" />
             <AdminTable title="收藏排行榜" rows={data.topSavedCompanies} columns={['company', 'count']} empty="还没有收藏点击。" />
             <AdminTable title="已投递排行榜" rows={data.topAppliedCompanies} columns={['company', 'count']} empty="还没有已投递点击。" />
             <AdminTable title="注册用户" rows={data.recentUsers} columns={['id', 'phone', 'created_at', 'last_login_at']} empty="还没有注册用户。" />
@@ -326,6 +330,8 @@ export default function App() {
   const [industry, setIndustry] = useState('全部');
   const [benefits, setBenefits] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Company | null>(null);
+  const [selectedJobs, setSelectedJobs] = useState<JobFeed | null>(null);
+  const [selectedJobsStatus, setSelectedJobsStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [sortBy, setSortBy] = useState('company');
   const [error, setError] = useState<string | null>(null);
   const [sapJobs, setSapJobs] = useState<JobFeed | null>(null);
@@ -350,10 +356,18 @@ export default function App() {
 
   useEffect(() => {
     loadCompanies().then(setCompanies).catch(() => setError('公司数据加载失败，请检查 CSV 文件。'));
-    fetch('/jobs/sap-china.json')
+    fetch('/api/jobs?company=SAP')
       .then((response) => (response.ok ? response.json() : null))
-      .then((feed: JobFeed | null) => setSapJobs(feed))
-      .catch(() => setSapJobs(null));
+      .then((feed: (JobFeed & { ok?: boolean }) | null) => {
+        if (feed?.jobs?.length) return setSapJobs(feed);
+        return fetch('/jobs/sap-china.json')
+          .then((response) => (response.ok ? response.json() : null))
+          .then((fallback: JobFeed | null) => setSapJobs(fallback));
+      })
+      .catch(() => fetch('/jobs/sap-china.json')
+        .then((response) => (response.ok ? response.json() : null))
+        .then((feed: JobFeed | null) => setSapJobs(feed))
+        .catch(() => setSapJobs(null)));
   }, []);
 
   useEffect(() => {
@@ -458,9 +472,29 @@ export default function App() {
     document.getElementById('city-answer')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
+  async function loadJobsForCompany(company: Company) {
+    setSelectedJobs(null);
+    setSelectedJobsStatus('loading');
+    try {
+      const response = await fetch(`/api/jobs?company=${encodeURIComponent(company.company)}&limit=120`);
+      const feed = response.ok ? await response.json() : null;
+      if (feed?.jobs?.length) {
+        setSelectedJobs(feed);
+        setSelectedJobsStatus('ready');
+      } else {
+        setSelectedJobs(null);
+        setSelectedJobsStatus('idle');
+      }
+    } catch {
+      setSelectedJobs(null);
+      setSelectedJobsStatus('error');
+    }
+  }
+
   function openCompany(company: Company) {
     trackEvent('company_detail_click', { company: company.company });
     setSelected(company);
+    void loadJobsForCompany(company);
   }
 
   function toggleFeedbackNeed(value: string) {
@@ -729,7 +763,7 @@ export default function App() {
               <div className="featuredCopy">
                 <div className="eyebrow">今日推荐</div>
                 <h3>SAP 中国正在招聘</h3>
-                <p>官网当前抓取到 {sapJobs.count} 个中国范围岗位，覆盖上海、北京、大连、深圳、广州、西安、成都等城市。</p>
+                <p>官网当前同步到 {sapJobs.count} 个中国范围岗位，覆盖多个城市。</p>
                 <div className="featuredActions">
                   <button className="primaryButton" onClick={() => {
                     const sap = companies.find((company) => company.company === 'SAP');
@@ -765,7 +799,7 @@ export default function App() {
               {activeRegion ? (
                 <div className="regionDetail">
                   <strong>{activeRegion.name}</strong>
-                  <span>{activeRegion.companyCount} 家公司 · {activeRegion.jobCount} 个 SAP 岗位</span>
+                  <span>{activeRegion.companyCount} 家公司 · {activeRegion.jobCount} 个同步岗位</span>
                   <div>
                     {activeRegion.topCities.length > 0 ? activeRegion.topCities.map(([city, count]) => (
                       <button key={city} className={selectedRegionCity === city ? 'active' : ''} onClick={() => {
@@ -898,24 +932,24 @@ export default function App() {
               </div>
               {authStatus === 'success' && authMessage && !authOpen ? <span className="inlineSuccess">{authMessage}</span> : null}
             </section>
-            {selected.company === 'SAP' && sapJobs ? (
+            {selectedJobs?.jobs.length ? (
               <section className="detailSection">
                 <div className="sectionHead">
                   <div>
-                    <h3>当前官网在招岗位</h3>
-                    <p>{sapJobs.count} 个中国范围岗位 · 更新于 {new Date(sapJobs.scrapedAt).toLocaleString('zh-CN')}</p>
+                    <h3>{selected.company === 'SAP' ? '当前官网在招岗位' : '试抓到的官网岗位'}</h3>
+                    <p>{selectedJobs.count} 个岗位线索 · 更新于 {new Date(selectedJobs.scrapedAt).toLocaleString('zh-CN')}{selected.company === 'SAP' ? '' : ' · 通用抓取结果需以官网为准'}</p>
                   </div>
-                  <a className="textLink" href={sapJobs.sourceUrl} target="_blank" rel="noreferrer">查看全部</a>
+                  <a className="textLink" href={selectedJobs.sourceUrl || selected.recruitingUrl.split(';')[0]} target="_blank" rel="noreferrer">查看全部</a>
                 </div>
-                {sapJobs.cityCounts ? (
+                {selectedJobs.cityCounts ? (
                   <div className="citySummary">
-                    {Object.entries(sapJobs.cityCounts).map(([city, count]) => (
+                    {Object.entries(selectedJobs.cityCounts).map(([city, count]) => (
                       <span key={city}>{city} {count}</span>
                     ))}
                   </div>
                 ) : null}
                 <div className="jobList">
-                  {sapJobs.jobs.slice(0, 12).map((job) => (
+                  {selectedJobs.jobs.slice(0, 12).map((job) => (
                     <a className="jobItem" href={job.sourceUrl} target="_blank" rel="noreferrer" key={job.id}>
                       <strong>{job.title}</strong>
                       <span>{job.location} · {job.sourcePlatform}</span>
@@ -923,6 +957,8 @@ export default function App() {
                   ))}
                 </div>
               </section>
+            ) : selectedJobsStatus === 'loading' ? (
+              <section className="detailSection"><h3>岗位同步中</h3><p>正在读取该公司的官网岗位线索。</p></section>
             ) : null}
             <section className="detailSection">
               <h3>招聘入口</h3>

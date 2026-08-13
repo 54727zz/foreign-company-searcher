@@ -14,6 +14,7 @@ export type Company = {
 
 export type Job = {
   id: string;
+  jobKey?: string;
   company: string;
   title: string;
   city: string;

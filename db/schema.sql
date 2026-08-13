@@ -82,3 +82,45 @@ CREATE TABLE IF NOT EXISTS user_company_intents (
 
 CREATE INDEX IF NOT EXISTS idx_user_company_intents_created_at ON user_company_intents(created_at);
 CREATE INDEX IF NOT EXISTS idx_user_company_intents_user_id ON user_company_intents(user_id);
+
+CREATE TABLE IF NOT EXISTS job_sources (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  company TEXT NOT NULL UNIQUE,
+  source_url TEXT NOT NULL,
+  source_platform TEXT NOT NULL,
+  parser TEXT NOT NULL,
+  scope TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  last_scraped_at TEXT,
+  last_success_at TEXT,
+  last_error TEXT,
+  last_job_count INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_sources_company ON job_sources(company);
+CREATE INDEX IF NOT EXISTS idx_job_sources_status ON job_sources(status);
+
+CREATE TABLE IF NOT EXISTS jobs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_key TEXT NOT NULL UNIQUE,
+  company TEXT NOT NULL,
+  title TEXT NOT NULL,
+  city TEXT,
+  location TEXT,
+  source_platform TEXT,
+  source_url TEXT NOT NULL,
+  search_url TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  first_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  scraped_at TEXT NOT NULL,
+  raw_location TEXT,
+  job_hash TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_jobs_company ON jobs(company);
+CREATE INDEX IF NOT EXISTS idx_jobs_city ON jobs(city);
+CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
+CREATE INDEX IF NOT EXISTS idx_jobs_last_seen_at ON jobs(last_seen_at);

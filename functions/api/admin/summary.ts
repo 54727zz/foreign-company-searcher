@@ -38,6 +38,14 @@ async function all<T = unknown>(statement: D1PreparedStatement): Promise<T[]> {
   return result.results ?? [];
 }
 
+async function tryAll<T = unknown>(statement: D1PreparedStatement): Promise<T[]> {
+  try {
+    return await all<T>(statement);
+  } catch {
+    return [];
+  }
+}
+
 export const onRequestGet = async ({ request, env }: PagesContext) => {
   const expected = env.ADMIN_PASSWORD;
   const token = readBearerToken(request);
@@ -50,7 +58,7 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
     return json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
-  const [eventCounts, topCompanies, topCities, topRegions, topCareerLinks, topSavedCompanies, topAppliedCompanies, highIntentSessions, recentUsers, recentUserIntents, recentFeedback, dailyEvents] = await Promise.all([
+  const [eventCounts, topCompanies, topCities, topRegions, topCareerLinks, topSavedCompanies, topAppliedCompanies, highIntentSessions, recentUsers, recentUserIntents, recentFeedback, dailyEvents, jobSources, jobCityCounts] = await Promise.all([
     all(env.ANALYTICS_DB.prepare(
       `SELECT event_name, COUNT(*) AS count
        FROM analytics_events
@@ -149,6 +157,20 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
        GROUP BY day, event_name
        ORDER BY day DESC, count DESC`,
     )),
+    tryAll(env.ANALYTICS_DB.prepare(
+      `SELECT company, source_platform, scope, status, last_success_at, last_error, last_job_count
+       FROM job_sources
+       ORDER BY last_success_at DESC, company ASC
+       LIMIT 30`,
+    )),
+    tryAll(env.ANALYTICS_DB.prepare(
+      `SELECT company, city, COUNT(*) AS count
+       FROM jobs
+       WHERE status = 'active'
+       GROUP BY company, city
+       ORDER BY count DESC
+       LIMIT 30`,
+    )),
   ]);
 
   return json({
@@ -166,6 +188,8 @@ export const onRequestGet = async ({ request, env }: PagesContext) => {
     recentUserIntents,
     recentFeedback,
     dailyEvents,
+    jobSources,
+    jobCityCounts,
   });
 };
 

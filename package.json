@@ -7,7 +7,13 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "scrape:sap": "node scripts/scrape-sap.mjs"
+    "scrape:sap": "node scripts/scrape-sap.mjs",
+    "jobs:import:local": "node scripts/import-jobs-d1.mjs foreign_radar_analytics work/jobs/sap-china-import.sql",
+    "jobs:import:remote": "node scripts/import-jobs-d1.mjs foreign_radar_analytics work/jobs/sap-china-import.sql --remote",
+    "companies:extract": "node scripts/extract-company-source.mjs foreign_companies_by_industry.xlsx work/company-source-from-xlsx.json",
+    "jobs:crawl": "npm run companies:extract && node scripts/crawl-company-jobs.mjs work/company-source-from-xlsx.json",
+    "jobs:import:all:local": "node scripts/import-jobs-d1.mjs foreign_radar_analytics work/jobs/all-companies-jobs-import.sql",
+    "jobs:import:all:remote": "node scripts/import-jobs-d1.mjs foreign_radar_analytics work/jobs/all-companies-jobs-import.sql --remote"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
