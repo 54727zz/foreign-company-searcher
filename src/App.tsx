@@ -11,6 +11,7 @@ const popularCities = ['上海', '北京', '苏州', '大连', '成都', '武汉
 const feedbackOptions = ['更多城市外企名单', '实时岗位更新', '福利待遇和年假信息', '外包/正式合同识别', '简历和面试经验', '按岗位推荐公司'];
 
 type AdminRow = Record<string, string | number | null>;
+type JobSummaryItem = { company: string; status: string; count: number; updatedAt: string | null };
 
 type AdminSummary = {
   generatedAt: string;
@@ -335,6 +336,7 @@ export default function App() {
   const [sortBy, setSortBy] = useState('company');
   const [error, setError] = useState<string | null>(null);
   const [sapJobs, setSapJobs] = useState<JobFeed | null>(null);
+  const [jobSummary, setJobSummary] = useState<Record<string, JobSummaryItem>>({});
   const [selectedRegion, setSelectedRegion] = useState('全部');
   const [selectedRegionCity, setSelectedRegionCity] = useState<string | null>(null);
   const [cityQuery, setCityQuery] = useState('');
@@ -356,6 +358,14 @@ export default function App() {
 
   useEffect(() => {
     loadCompanies().then(setCompanies).catch(() => setError('公司数据加载失败，请检查 CSV 文件。'));
+    fetch('/api/job-summary')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: { companies?: JobSummaryItem[] } | null) => {
+        const next = Object.fromEntries((payload?.companies ?? []).map((item) => [item.company, item]));
+        setJobSummary(next);
+      })
+      .catch(() => setJobSummary({}));
+
     fetch('/api/jobs?company=SAP')
       .then((response) => (response.ok ? response.json() : null))
       .then((feed: (JobFeed & { ok?: boolean }) | null) => {
@@ -432,6 +442,7 @@ export default function App() {
   }, [cityAnswerCompanies]);
 
   const activeRegion = regionStats.find((region) => region.id === selectedRegion) ?? null;
+  const selectedJobSummary = selected ? jobSummary[selected.company] : null;
   const activeRegionCompanies = useMemo(() => {
     if (selectedRegion === '全部') return [];
     return companies
@@ -877,7 +888,7 @@ export default function App() {
                     <h3>{company.company}</h3>
                     <p>{company.brandOrCnName} · {company.countryOrRegion}</p>
                   </div>
-                  <span className="sourceTag">官网</span>
+                  <span className="sourceTag">{jobSummary[company.company]?.count ? `岗位 ${jobSummary[company.company].count}` : '官网'}</span>
                 </div>
                 <div className="metaRows">
                   <div><b>行业</b><span>{company.industry}</span></div>
@@ -959,6 +970,12 @@ export default function App() {
               </section>
             ) : selectedJobsStatus === 'loading' ? (
               <section className="detailSection"><h3>岗位同步中</h3><p>正在读取该公司的官网岗位线索。</p></section>
+            ) : selectedJobSummary?.count ? (
+              <section className="detailSection">
+                <h3>官网岗位线索</h3>
+                <p>已抓到 {selectedJobSummary.count} 条岗位线索，正在做链接和地区复核。当前详情页只展示高可信岗位，完整结果请以官网入口为准。</p>
+                <a className="textLink" href={splitRecruitingUrls(selected.recruitingUrl)[0]} target="_blank" rel="noreferrer">打开官网招聘入口</a>
+              </section>
             ) : null}
             <section className="detailSection">
               <h3>招聘入口</h3>

@@ -97,6 +97,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     scope: source?.scope ?? 'China',
     scrapedAt: source?.last_success_at ?? source?.last_scraped_at ?? rows[0]?.scraped_at ?? new Date().toISOString(),
     count: rows.length,
+    rawCount: source?.last_job_count ?? rows.length,
+    sourceStatus: source?.last_job_count ? source?.source_platform : source?.source_platform,
     cityCounts,
     jobs: rows.map((job) => ({
       id: job.job_key,

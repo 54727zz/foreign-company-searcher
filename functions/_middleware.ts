@@ -15,6 +15,7 @@ const ALLOWED_EXACT_PATHS = new Set([
   '/api/user/profile',
   '/api/feedback',
   '/api/jobs',
+  '/api/job-summary',
   '/api/track',
   '/foreign_companies_by_industry.csv',
   '/favicon.ico',
