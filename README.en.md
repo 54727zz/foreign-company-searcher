@@ -6,7 +6,7 @@
 
 > Live site: **[https://waiqida.cn](https://waiqida.cn)**
 
-A job-search navigation platform built for candidates in China who want to work at multinational companies. We've manually verified the official career portals of 283 foreign-invested enterprises operating in China — so you can skip the guesswork and go straight to the right place to apply.
+A job-search navigation platform for candidates in China who want to work at multinational companies. Landing a job at a foreign company starts with finding the right place to apply.
 
 ---
 
