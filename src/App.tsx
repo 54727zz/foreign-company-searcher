@@ -674,12 +674,8 @@ export default function App() {
   }, [companies, industry, benefits, query, selectedRegion, sortBy]);
 
 
-  const visibleFiltered = useMemo(() => {
-    if (isMember) return filtered;
-    const limit = industry === '全部' ? freeCompanyLimit : freeIndustryCompanyLimit;
-    return filtered.slice(0, limit);
-  }, [filtered, isMember, industry]);
-  const hiddenCompanyCount = Math.max(0, filtered.length - visibleFiltered.length);
+  const visibleFiltered = filtered;
+  const hiddenCompanyCount = 0;
 
   const topIndustries = useMemo(() => {
     const counts = new Map<string, number>();
@@ -722,7 +718,7 @@ export default function App() {
       .filter((company) => companyMatchesRegion(company, selectedRegion))
       .filter((company) => !selectedRegionCity || company.primaryChinaCityFocus.includes(selectedRegionCity));
   }, [companies, selectedRegion, selectedRegionCity]);
-  const visibleRegionCompanies = useMemo(() => (isMember ? activeRegionCompanies : activeRegionCompanies.slice(0, freeRegionCompanyLimit)), [activeRegionCompanies, isMember]);
+  const visibleRegionCompanies = activeRegionCompanies;
   const hiddenRegionCompanyCount = Math.max(0, activeRegionCompanies.length - visibleRegionCompanies.length);
 
   function selectRegion(regionId: string) {
@@ -917,6 +913,23 @@ export default function App() {
     trackEvent('company_detail_click', { company: company.company });
     setSelected(company);
     void loadJobsForCompany(company);
+  }
+
+  function exportCompanies(list: Company[]) {
+    const header = '公司名,中文名/品牌,行业,子赛道,国家/地区,主要城市,招聘官网';
+    const rows = list.map((c) =>
+      [c.company, c.brandOrCnName, c.industry, c.subSector, c.countryOrRegion, c.primaryChinaCityFocus, c.verifiedCareerUrl || c.recruitingUrl]
+        .map((v) => `"${(v ?? '').replace(/"/g, '""')}"`)
+        .join(',')
+    );
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '外企雷达-公司名单.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function toggleFeedbackNeed(value: string) {
@@ -1362,12 +1375,17 @@ export default function App() {
           </section>
 
           <section className="panel toolbar">
-            <div><strong>{filtered.length}</strong> 家公司匹配当前筛选{!isMember && filtered.length > visibleFiltered.length ? `，免费展示前 ${visibleFiltered.length} 家` : ''}</div>
-            <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+            <div><strong>{filtered.length}</strong> 家公司匹配当前筛选</div>
+            <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+              {isMember ? (
+                <button className="ghostButton" onClick={() => exportCompanies(filtered)}>导出名单</button>
+              ) : null}
+              <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
               <option value="company">按公司名</option>
               <option value="industry">按行业</option>
               <option value="city">按城市</option>
             </select>
+            </div>
           </section>
 
           {error ? <section className="panel empty">{error}</section> : null}
@@ -1394,14 +1412,6 @@ export default function App() {
                 </div>
               </article>
             ))}
-            {!isMember && hiddenCompanyCount > 0 ? (
-              <article className="panel memberUnlockCard">
-                <div className="eyebrow">MEMBER</div>
-                <h3>还有 {hiddenCompanyCount} 家外企可继续查看</h3>
-                <p>开通 19.9 会员，解锁完整公司列表、AI 岗位推荐不限次和每日岗位推荐。</p>
-                <button className="primaryButton" onClick={() => openMemberModal('company')}>19.9 开通会员</button>
-              </article>
-            ) : null}
           </section>
         </main>
       </div>
@@ -1513,10 +1523,10 @@ export default function App() {
             <button className="closeButton" type="button" onClick={() => setMemberModalOpen(false)} aria-label="关闭">×</button>
             <div className="eyebrow">外企雷达会员</div>
             <h2>解锁完整外企求职雷达</h2>
-            <p>{memberModalReason === 'ai' ? '你已经用完今天的免费 AI 推荐。' : '当前免费版只展示部分精选外企。'}开通会员后，可以继续帮你按专业、城市、经历精准推荐外企岗位，并查看完整精选外企公司名单。</p>
+            <p>{memberModalReason === 'ai' ? '你已经用完今天的免费 AI 推荐。' : '开通会员，解锁更多专属权益。'}开通会员后，可以继续帮你按专业、城市、经历精准推荐外企岗位，并导出完整外企公司名单。</p>
             <div className="memberBenefits">
               <span>AI 岗位精准推荐不限次</span>
-              <span>解锁全部精选外企公司名单</span>
+              <span>导出完整 283 家外企公司名单（CSV）</span>
               <span>查看所有官网招聘入口</span>
               <span>每日更新可投岗位</span>
               <span>免费简历分析、投递方向解析</span>
