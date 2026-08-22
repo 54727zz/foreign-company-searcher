@@ -10,6 +10,13 @@ export type Company = {
   benefitOrFilterTags: string;
   notes: string;
   benefits: string[];
+  dataSource?: string;
+  waiqiId?: string;
+  waiqiSourceUrl?: string;
+  waiqiPositionCount?: string;
+  mergeStatus?: string;
+  verifiedCareerUrl?: string;
+  careerEnrichmentStatus?: string;
 };
 
 export type Job = {

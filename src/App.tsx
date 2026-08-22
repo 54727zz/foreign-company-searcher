@@ -12,6 +12,78 @@ const subscriptionCityOptions = ['上海', '苏州', '大连', '长沙'];
 const subscriptionCompanyOptions = ['SAP', 'Nike', 'IKEA'];
 const subscriptionKeywordOptions = ['财务', '供应链', '产品', '管培生'];
 const feedbackOptions = ['更多城市外企名单', '实时岗位更新', '福利待遇和年假信息', '外包/正式合同识别', '简历和面试经验', '按岗位推荐公司'];
+const freeCompanyLimit = 10;
+const freeIndustryCompanyLimit = 5;
+const freeRegionCompanyLimit = 3;
+const freeDetailJobLimit = 3;
+const freeAdvisorCompanyLimit = 3;
+const advisorDailyFreeLimit = 2;
+const membershipKey = 'foreignRadarMembershipPreviewV2';
+const advisorProfiles = [
+  {
+    match: ['食品', '食工', '食品科学', '食品质量'],
+    title: '食品专业外企方向',
+    roles: ['质量管理 QA/QC', '食品安全', '法规事务', '供应链计划', '生产管培生', '市场/品类助理'],
+    industries: ['快速消费品', '食品饮料', '检测认证', '零售', '宠物食品'],
+    companies: ['Nestle', 'Mars', 'Royal Canin', 'Mondelez', 'Unilever', 'SGS', 'Bureau Veritas', 'METRO'],
+    keywords: ['quality', 'food safety', 'regulatory', 'supply chain', 'graduate trainee', 'QA'],
+  },
+  {
+    match: ['环境', '环保', '环境工程', '安全工程', 'EHS', 'HSE'],
+    title: '环境工程/EHS 外企方向',
+    roles: ['EHS/HSE 专员', '环保合规', '可持续发展', '质量体系', '生产运营', '检测认证项目'],
+    industries: ['能源化工环保', '检测认证', '机械制造业', '汽车', '医疗医药生物'],
+    companies: ['BASF', 'SGS', 'TUV SUD', 'TUV Rheinland', 'Bureau Veritas', '3M', 'Saint-Gobain', 'Schneider Electric'],
+    keywords: ['EHS', 'HSE', 'sustainability', 'environment', 'compliance', 'ISO'],
+  },
+  {
+    match: ['财务', '会计', '审计', '金融', '财会'],
+    title: '财务/审计外企方向',
+    roles: ['财务分析 FP&A', '会计', '税务', '内控', '审计', '共享服务中心'],
+    industries: ['财务审计税务', '金融业', '快速消费品', '医疗医药生物', '科技/软件/云计算'],
+    companies: ['PwC', 'EY', 'KPMG', 'Deloitte', 'Citi', 'HSBC', 'SAP', 'IBM'],
+    keywords: ['finance', 'FP&A', 'accounting', 'tax', 'audit', 'controller'],
+  },
+  {
+    match: ['供应链', '物流', '采购', '运营', '计划'],
+    title: '供应链/采购外企方向',
+    roles: ['供应链计划', '采购', '物流运营', '订单管理', '需求计划', 'S&OP'],
+    industries: ['交通物流仓储', '快速消费品', '机械制造业', '汽车', '贸易批发零售'],
+    companies: ['DHL', 'Maersk', 'Kuehne+Nagel', 'Cargill', 'P&G', 'Unilever', 'Nike', 'IKEA'],
+    keywords: ['supply chain', 'procurement', 'logistics', 'planning', 'S&OP', 'demand planner'],
+  },
+  {
+    match: ['产品', '互联网', '软件', '计算机', '开发', '数据'],
+    title: '产品/软件外企方向',
+    roles: ['产品经理', '软件工程师', '数据分析', '技术支持', '解决方案顾问', '云服务运营'],
+    industries: ['科技/软件/云计算', 'IT/互联网/游戏', '通信电子半导体', '咨询'],
+    companies: ['SAP', 'Microsoft', 'Amazon', 'IBM', 'Cisco', 'Accenture', 'Thoughtworks', 'Adobe'],
+    keywords: ['product', 'software engineer', 'data analyst', 'solution consultant', 'cloud', 'support'],
+  },
+  {
+    match: ['管培', '校招', '应届', '26届', '27届', '毕业生', '本科'],
+    title: '应届/管培生外企方向',
+    roles: ['管理培训生', '销售管培', '供应链管培', '市场助理', '财务轮岗', '技术培训生'],
+    industries: ['快速消费品', '零售', '医疗医药生物', '汽车', '机械制造业'],
+    companies: ['P&G', 'Unilever', 'L\'Oreal', 'Mars', 'Nike', 'Adidas', 'AstraZeneca', 'Bosch'],
+    keywords: ['graduate trainee', 'management trainee', 'early career', 'campus', 'sales trainee'],
+  },
+];
+
+type AdvisorChatMessage = { role: 'user' | 'assistant'; content: string };
+
+type AdvisorResult = {
+  title: string;
+  matchedCity: string | null;
+  roles: string[];
+  industries: string[];
+  keywords: string[];
+  companies: Company[];
+  jobs: JobFeed['jobs'];
+  aiAnswer?: string;
+  aiStatus?: 'idle' | 'loading' | 'ready' | 'error';
+  aiError?: string;
+};
 
 type AdminRow = Record<string, string | number | null>;
 type JobSummaryItem = { company: string; status: string; count: number; updatedAt: string | null };
@@ -77,7 +149,37 @@ function companyText(company: Company): string {
 }
 
 function splitRecruitingUrls(value: string): string[] {
-  return value.split(';').map((item) => item.trim()).filter(Boolean);
+  return value.split(/[;；\n]+/).map((item) => item.trim()).filter(Boolean);
+}
+
+function isCandidateCompany(company: Company): boolean {
+  return company.dataSource === 'waiqi_candidate';
+}
+
+function isPublicCompany(company: Company): boolean {
+  const hasCareerLink = splitRecruitingUrls(company.recruitingUrl).length > 0;
+  if (!hasCareerLink) return false;
+  if (!isCandidateCompany(company)) return true;
+  return company.careerEnrichmentStatus === 'official_site_verified' || Boolean(company.verifiedCareerUrl);
+}
+
+function companyBadge(company: Company, summary?: JobSummaryItem): string {
+  if (summary?.count) return `岗位 ${summary.count}`;
+  return '官网';
+}
+
+function readMembershipPreview(): boolean {
+  return localStorage.getItem(membershipKey) === 'active';
+}
+
+function renderAiMessage(content: string) {
+  const parts = content.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={`bold-${index}`}>{part.slice(2, -2)}</strong>;
+    }
+    return <span key={`text-${index}`}>{part}</span>;
+  });
 }
 
 function linkLabel(url: string, index: number): string {
@@ -87,6 +189,57 @@ function linkLabel(url: string, index: number): string {
   } catch {
     return index === 0 ? '主入口' : '备用入口';
   }
+}
+
+function detectCity(text: string, companies: Company[]): string | null {
+  const citySet = new Set<string>();
+  popularCities.forEach((city) => citySet.add(city));
+  companies.forEach((company) => company.primaryChinaCityFocus.split(/[\/、,，;；\s]+/).forEach((city) => {
+    const trimmed = city.trim();
+    if (trimmed.length >= 2 && trimmed.length <= 6) citySet.add(trimmed);
+  }));
+  return [...citySet].find((city) => text.includes(city)) ?? null;
+}
+
+function buildAdvisorResult(question: string, companies: Company[], sapJobs: JobFeed | null): AdvisorResult {
+  const normalized = question.toLowerCase();
+  const profile = advisorProfiles.find((item) => item.match.some((keyword) => normalized.includes(keyword.toLowerCase()))) ?? advisorProfiles[5];
+  const city = detectCity(question, companies);
+  const preferred = new Set(profile.companies.map((item) => item.toLowerCase()));
+  const questionTerms = normalized.split(/[\s,，。；;、]+/).filter((term) => term.length >= 2);
+  const scoredCompanies = companies
+    .filter((company) => !city || company.primaryChinaCityFocus.includes(city))
+    .map((company) => {
+      const text = companyText(company);
+      let score = 0;
+      if (preferred.has(company.company.toLowerCase())) score += 20;
+      if (profile.industries.some((name) => company.industry.includes(name) || company.subSector.includes(name))) score += 10;
+      for (const keyword of profile.keywords) if (text.includes(keyword.toLowerCase())) score += 4;
+      for (const role of profile.roles) if (text.includes(role.toLowerCase())) score += 3;
+      for (const term of questionTerms) if (text.includes(term)) score += 2;
+      if (company.recruitingUrl) score += 2;
+      if (company.waiqiPositionCount && Number(company.waiqiPositionCount) > 0) score += 1;
+      return { company, score };
+    })
+    .sort((a, b) => b.score - a.score);
+  const matchedCompanies = scoredCompanies.filter((item) => item.score > 0).map((item) => item.company).slice(0, 18);
+  const fallbackCompanies = matchedCompanies.length ? matchedCompanies : scoredCompanies.map((item) => item.company).slice(0, 18);
+  const jobPool = sapJobs?.jobs ?? [];
+  const matchedJobs = jobPool.filter((job) => {
+    const text = `${job.title} ${job.city} ${job.location}`.toLowerCase();
+    return (!city || text.includes(city.toLowerCase())) && profile.keywords.some((keyword) => text.includes(keyword.toLowerCase()));
+  });
+  const fallbackJobs = jobPool.filter((job) => !city || `${job.city} ${job.location}`.toLowerCase().includes(city.toLowerCase()));
+  const jobs = (matchedJobs.length ? matchedJobs : fallbackJobs).slice(0, 4);
+  return {
+    title: profile.title,
+    matchedCity: city,
+    roles: profile.roles,
+    industries: profile.industries,
+    keywords: profile.keywords,
+    companies: fallbackCompanies,
+    jobs,
+  };
 }
 
 function MePage() {
@@ -441,15 +594,30 @@ export default function App() {
   const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot'>('register');
   const [authPhone, setAuthPhone] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authStatus, setAuthStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [authMessage, setAuthMessage] = useState('');
+  const [authReason, setAuthReason] = useState<'general' | 'intent' | 'advisor'>('general');
   const [pendingIntent, setPendingIntent] = useState<{ intent: CompanyIntent; company: Company } | null>(null);
+  const [advisorQuestion, setAdvisorQuestion] = useState('');
+  const [advisorResult, setAdvisorResult] = useState<AdvisorResult | null>(null);
+  const [advisorMessages, setAdvisorMessages] = useState<AdvisorChatMessage[]>([]);
+  const [advisorLoading, setAdvisorLoading] = useState(false);
+  const [isMember, setIsMember] = useState(false);
+  const [memberModalOpen, setMemberModalOpen] = useState(false);
+  const [memberModalReason, setMemberModalReason] = useState<'ai' | 'company' | 'general'>('general');
+  const [advisorDailyCount, setAdvisorDailyCount] = useState<number | null>(null);
+  const [memberContact, setMemberContact] = useState('');
+  const [memberSubmitStatus, setMemberSubmitStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const isLocalPreview = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   useEffect(() => {
-    loadCompanies().then(setCompanies).catch(() => setError('公司数据加载失败，请检查 CSV 文件。'));
+    loadCompanies().then((items) => {
+      const publicItems = items.filter(isPublicCompany);
+      setCompanies(publicItems.length ? publicItems : items.filter((company) => splitRecruitingUrls(company.recruitingUrl).length > 0));
+    }).catch(() => setError('公司数据加载失败，请检查 CSV 文件。'));
     fetch('/api/job-summary')
       .then((response) => (response.ok ? response.json() : null))
       .then((payload: { companies?: JobSummaryItem[] } | null) => {
@@ -462,15 +630,20 @@ export default function App() {
       .then((response) => (response.ok ? response.json() : null))
       .then((feed: (JobFeed & { ok?: boolean }) | null) => {
         if (feed?.jobs?.length) return setSapJobs(feed);
-        return fetch('/jobs/sap-china.json')
+        return fetch('/jobs/sap-china.json', { headers: { 'x-fr-client': 'web-app' }, cache: 'no-store' })
           .then((response) => (response.ok ? response.json() : null))
           .then((fallback: JobFeed | null) => setSapJobs(fallback));
       })
-      .catch(() => fetch('/jobs/sap-china.json')
+      .catch(() => fetch('/jobs/sap-china.json', { headers: { 'x-fr-client': 'web-app' }, cache: 'no-store' })
         .then((response) => (response.ok ? response.json() : null))
         .then((feed: JobFeed | null) => setSapJobs(feed))
         .catch(() => setSapJobs(null)));
   }, []);
+
+  useEffect(() => {
+    setIsMember(readMembershipPreview());
+  }, []);
+
 
   useEffect(() => {
     const token = localStorage.getItem('foreignRadarAuthToken');
@@ -499,6 +672,14 @@ export default function App() {
         return a.company.localeCompare(b.company, 'en');
       });
   }, [companies, industry, benefits, query, selectedRegion, sortBy]);
+
+
+  const visibleFiltered = useMemo(() => {
+    if (isMember) return filtered;
+    const limit = industry === '全部' ? freeCompanyLimit : freeIndustryCompanyLimit;
+    return filtered.slice(0, limit);
+  }, [filtered, isMember, industry]);
+  const hiddenCompanyCount = Math.max(0, filtered.length - visibleFiltered.length);
 
   const topIndustries = useMemo(() => {
     const counts = new Map<string, number>();
@@ -539,9 +720,10 @@ export default function App() {
     if (selectedRegion === '全部') return [];
     return companies
       .filter((company) => companyMatchesRegion(company, selectedRegion))
-      .filter((company) => !selectedRegionCity || company.primaryChinaCityFocus.includes(selectedRegionCity))
-      .slice(0, 20);
+      .filter((company) => !selectedRegionCity || company.primaryChinaCityFocus.includes(selectedRegionCity));
   }, [companies, selectedRegion, selectedRegionCity]);
+  const visibleRegionCompanies = useMemo(() => (isMember ? activeRegionCompanies : activeRegionCompanies.slice(0, freeRegionCompanyLimit)), [activeRegionCompanies, isMember]);
+  const hiddenRegionCompanyCount = Math.max(0, activeRegionCompanies.length - visibleRegionCompanies.length);
 
   function selectRegion(regionId: string) {
     setSelectedRegion(regionId);
@@ -573,6 +755,143 @@ export default function App() {
     setQuery(city);
     trackEvent('city_filter_click', { city });
     document.getElementById('city-answer')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function submitAdvisor(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    const question = advisorQuestion.trim();
+    if (!question || advisorLoading) return;
+
+    const token = localStorage.getItem('foreignRadarAuthToken');
+    if (!authUser || !token) {
+      setAuthReason('advisor');
+      setPendingIntent(null);
+      setAuthMode('register');
+      setAuthStatus('idle');
+      setAuthMessage('');
+      setAuthOpen(true);
+      trackEvent('auth_required_view', { region: 'ai_advisor' });
+      return;
+    }
+
+    const baseResult = buildAdvisorResult(question, companies, sapJobs);
+    const userMessage: AdvisorChatMessage = { role: 'user', content: question };
+    const nextMessages = [...advisorMessages, userMessage];
+    setAdvisorMessages(nextMessages);
+    setAdvisorQuestion('');
+    setAdvisorResult({ ...baseResult, aiStatus: 'loading' });
+    setAdvisorLoading(true);
+    trackEvent('job_advisor_submit');
+    try {
+      const response = await fetch('/api/advisor', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          question,
+          history: advisorMessages.slice(-6),
+          roles: baseResult.roles,
+          industries: baseResult.industries,
+          keywords: baseResult.keywords,
+          companies: baseResult.companies.map((company) => ({
+            company: company.company,
+            industry: company.industry,
+            subSector: company.subSector,
+            city: company.primaryChinaCityFocus,
+            roles: company.rolesToWatch,
+            recruitingUrl: splitRecruitingUrls(company.recruitingUrl)[0],
+          })),
+          jobs: baseResult.jobs.map((job) => ({
+            title: job.title,
+            company: job.company,
+            location: job.location,
+            sourceUrl: job.sourceUrl,
+          })),
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) {
+        if (payload.error === 'login-required') {
+          localStorage.removeItem('foreignRadarAuthToken');
+          setAuthUser(null);
+          setAuthReason('advisor');
+          setAuthMode('login');
+          setAuthStatus('error');
+          setAuthMessage('登录状态已过期，请重新登录后继续使用 AI 推荐。');
+          setAuthOpen(true);
+          setAdvisorQuestion(question);
+          setAdvisorResult(null);
+          setAdvisorMessages(advisorMessages);
+          return;
+        }
+        if (payload.error === 'ai-free-limit-reached') {
+          setAdvisorDailyCount(Number(payload.usage?.count ?? advisorDailyFreeLimit));
+          setMemberModalReason('ai');
+          setMemberModalOpen(true);
+          trackEvent('member_paywall_view', { region: 'ai_advisor' });
+          setAdvisorQuestion(question);
+          setAdvisorResult(null);
+          setAdvisorMessages(advisorMessages);
+          return;
+        }
+        throw new Error(payload.error ?? 'advisor-failed');
+      }
+      const answer = payload.answer || '我先给你一个方向：可以补充城市、英语水平、实习经历，我再帮你缩小岗位范围。';
+      if (payload.usage?.count) setAdvisorDailyCount(Number(payload.usage.count));
+      setAdvisorMessages([...nextMessages, { role: 'assistant', content: answer }]);
+      setAdvisorResult({ ...baseResult, aiStatus: 'ready', aiAnswer: answer });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : 'advisor-failed';
+      console.warn('advisor request failed', code);
+      const fallbackAnswer = `我先根据你的描述给你一版方向：你可以优先看 **${baseResult.roles.slice(0, 3).join('**、**')}** 这几类岗位。它们和你的专业/经历更容易衔接，也方便你在官网里用关键词快速筛选。
+
+我把推荐公司和可直接打开的岗位放在下面了，你可以先点开看看 JD 要求，再告诉我你的城市、实习经历和英语水平，我再帮你缩小范围。`;
+      setAdvisorMessages([...nextMessages, { role: 'assistant', content: fallbackAnswer }]);
+      setAdvisorResult({ ...baseResult, aiStatus: 'ready', aiAnswer: fallbackAnswer, aiError: code });
+    } finally {
+      setAdvisorLoading(false);
+    }
+  }
+
+  function openMemberModal(reason: 'ai' | 'company' | 'general') {
+    setMemberModalReason(reason);
+    setMemberModalOpen(true);
+    setMemberSubmitStatus('idle');
+    trackEvent('member_paywall_view', { region: reason });
+  }
+
+  function activateLocalMembership() {
+    localStorage.setItem(membershipKey, 'active');
+    setIsMember(true);
+    setMemberModalOpen(false);
+    trackEvent('member_local_unlock_click');
+  }
+
+  async function submitMemberPaymentContact(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!memberContact.trim()) {
+      setMemberSubmitStatus('error');
+      return;
+    }
+    setMemberSubmitStatus('submitting');
+    trackEvent('member_payment_contact_submit');
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          featureNeeds: ['19.9会员开通', '微信收款码付款'],
+          targetCity: '',
+          targetRole: '',
+          contact: memberContact,
+          message: `用户提交会员开通信息，来源：${memberModalReason}`,
+          ...currentAnalyticsContext(),
+        }),
+      });
+      if (!response.ok) throw new Error('member-contact-submit-failed');
+      setMemberSubmitStatus('success');
+    } catch {
+      setMemberSubmitStatus('error');
+    }
   }
 
   async function loadJobsForCompany(company: Company) {
@@ -626,6 +945,7 @@ export default function App() {
 
   async function openAuthForIntent(intent: CompanyIntent, company: Company) {
     setPendingIntent({ intent, company });
+    setAuthReason('intent');
     setAuthMessage('');
     setAuthStatus('idle');
     if (!authUser) {
@@ -638,6 +958,7 @@ export default function App() {
       setAuthMessage(`${intentMeta[intent].label}已保存到你的投递清单。`);
       setAuthStatus('success');
     } catch {
+      setAuthReason('intent');
       setAuthOpen(true);
       setAuthStatus('error');
       setAuthMessage('登录状态已过期，请重新登录后保存。');
@@ -649,6 +970,23 @@ export default function App() {
     setAuthStatus('submitting');
     setAuthMessage('');
     try {
+      if (authMode === 'forgot') {
+        const response = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            phone: authPhone,
+            message: '用户在登录弹窗提交忘记密码申请。',
+            ...currentAnalyticsContext(),
+          }),
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.error ?? 'forgot-password-failed');
+        setAuthStatus('success');
+        setAuthMessage('找回申请已提交。为了账号安全，我会先核验账号，再联系你处理密码重置。');
+        return;
+      }
+
       const response = await fetch(`/api/auth/${authMode}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -660,7 +998,7 @@ export default function App() {
       setAuthUser(payload.user);
       if (pendingIntent) await saveCompanyIntent(pendingIntent.intent, pendingIntent.company, payload.token);
       setAuthStatus('success');
-      setAuthMessage(pendingIntent ? `${intentMeta[pendingIntent.intent].label}已保存到你的投递清单。` : '登录成功。');
+      setAuthMessage(pendingIntent ? `${intentMeta[pendingIntent.intent].label}已保存到你的投递清单。` : authReason === 'advisor' ? '登录成功，可以继续向 AI 提问。' : '登录成功。');
       setAuthPassword('');
       setTimeout(() => setAuthOpen(false), 900);
     } catch (authError) {
@@ -669,6 +1007,7 @@ export default function App() {
       if (message === 'phone-exists') setAuthMessage('这个手机号已经注册过，请切换到登录。');
       else if (message === 'invalid-phone') setAuthMessage('请输入 11 位中国大陆手机号。');
       else if (message === 'invalid-password') setAuthMessage(passwordHint());
+      else if (message === 'forgot-password-failed') setAuthMessage('找回申请提交失败，请稍后再试。');
       else setAuthMessage('登录或注册失败，请检查手机号和密码。');
     }
   }
@@ -727,7 +1066,10 @@ export default function App() {
           <button>投稿</button>
           {authUser ? <button onClick={() => { window.location.href = '/me'; }}>{maskPhone(authUser.phone)}</button> : <button onClick={() => {
             setPendingIntent(null);
+            setAuthReason('general');
             setAuthMode('register');
+            setAuthStatus('idle');
+            setAuthMessage('');
             setAuthOpen(true);
           }}>登录</button>}
         </nav>
@@ -770,66 +1112,115 @@ export default function App() {
         </aside>
 
         <main className="main">
-          <section className="hero">
+          <section className="hero heroAiOnly">
             <div className="panel heroCopy">
-              <div>
-                <div className="eyebrow">FOREIGN COMPANY RADAR</div>
-                <h2>找外企岗位，不再靠碰运气</h2>
-                <p>输入你的城市，先看身边有哪些外企、适合投什么岗位、官网招聘入口在哪里。</p>
-              </div>
-              <div className="citySearchHero" id="city-answer">
-                <label htmlFor="city-search">你想查哪个城市？</label>
-                <div className="citySearchBox">
-                  <input id="city-search" value={cityQuery} onChange={(event) => setCityQuery(event.target.value)} onKeyDown={(event) => {
-                    if (event.key === 'Enter') searchCity(cityQuery);
-                  }} placeholder="输入城市，例如南京、大连、长沙" />
-                  <button className="primaryButton" onClick={() => searchCity(cityQuery)}>查我的外企机会</button>
+              <form id="ai-advisor" className="advisorHero primaryAdvisor" onSubmit={submitAdvisor}>
+                <div className="advisorHead advisorHeroHead">
+                  <div className="advisorMascot" aria-hidden="true"><span>AI</span></div>
+                  <div>
+                    <span>AI 外企岗位推荐</span>
+                    <strong>不知道投什么外企？先让 AI 帮你筛一轮。</strong>
+                    <p>输入专业、届别、城市或经历，我会把适合方向、推荐公司和可点岗位放在一个答案里。</p>
+                  </div>
                 </div>
-                <div className="cityQuickLinks">
-                  {popularCities.map((city) => <button key={city} onClick={() => searchCity(city)}>{city}</button>)}
+                <div className="advisorInputRow">
+                  <input value={advisorQuestion} onChange={(event) => setAdvisorQuestion(event.target.value)} placeholder="例如：26届食品专业想找杭州外企，可以投什么？" />
+                  <button className="primaryButton" type="submit">帮我推荐</button>
                 </div>
+                <div className="advisorExamples">
+                  {['26届环境工程专业能投什么岗位', '食品专业可以报哪些外企', '杭州供应链岗位有哪些方向'].map((item) => (
+                    <button type="button" key={item} onClick={() => setAdvisorQuestion(item)}>{item}</button>
+                  ))}
+                </div>
+              </form>
+              {advisorResult ? (
+                <div className="advisorResultPanel advisorResultInline">
+              <div className="sectionHead">
+                <div>
+                  <div className="eyebrow">RECOMMENDATION</div>
+                  <h3>{advisorResult.title}{advisorResult.matchedCity ? ` · ${advisorResult.matchedCity}` : ''}</h3>
+                  <p>基于你的描述，先给出可投方向、公司和官网入口；岗位结果以公司官网为准。</p>
+                </div>
+                <button className="ghostButton" onClick={() => {
+                  setAdvisorQuestion('');
+                  setAdvisorResult(null);
+                  setAdvisorMessages([]);
+                }}>重新提问</button>
               </div>
+              <div className="advisorResultGrid">
+                <div className="aiChatThread wide">
+                  {advisorMessages.map((message, index) => (
+                    <div className={`aiChatRow ${message.role}`} key={`advisor-message-${index}`}>
+                      <div className="aiAvatar">{message.role === 'assistant' ? 'AI' : '你'}</div>
+                      <div className="aiBubble"><p>{renderAiMessage(message.content)}</p></div>
+                    </div>
+                  ))}
+                  {advisorLoading ? (
+                    <div className="aiChatRow assistant">
+                      <div className="aiAvatar">AI</div>
+                      <div className="aiBubble thinkingBubble"><p>我正在全网公司库和岗位线索里继续看<span className="thinkingDots"><span>.</span><span>.</span><span>.</span></span></p></div>
+                    </div>
+                  ) : null}
+                </div>
+                {advisorResult.aiStatus !== 'loading' ? (
+                <div className="advisorAnswerBundle wide">
+                  <div className="advisorMiniBlock wideMini">
+                    <strong>推荐岗位关键词</strong>
+                    <div>{[...advisorResult.roles.slice(0, 6), ...advisorResult.keywords].map((keyword) => <span key={keyword}>{keyword}</span>)}</div>
+                  </div>
+                  <div className="advisorOutputSection">
+                    <div>
+                      <strong>推荐关注公司</strong>
+                      <p>这些公司和你的描述更接近，点开可看官网招聘入口。</p>
+                    </div>
+                    <div className="advisorCompanyList">
+                      {advisorResult.companies.slice(0, isMember ? 6 : freeAdvisorCompanyLimit).map((company) => (
+                        <button key={`advisor-${company.company}`} onClick={() => openCompany(company)}>
+                          <b>{company.company}</b>
+                          <small>{company.industry} · {company.primaryChinaCityFocus}</small>
+                        </button>
+                      ))}
+                    </div>
+                    {!isMember && advisorResult.companies.length > freeAdvisorCompanyLimit ? (
+                      <div className="advisorInlineLock">
+                        <span>还有 {advisorResult.companies.length - freeAdvisorCompanyLimit} 家推荐公司可查看</span>
+                        <button className="ghostButton" onClick={() => openMemberModal('company')}>会员解锁</button>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="advisorOutputSection">
+                    <div>
+                      <strong>现在可以直接投递的岗位</strong>
+                      <p>岗位来自已接入的官网岗位源，打开后以公司官网为准。</p>
+                    </div>
+                    {advisorResult.jobs.length ? (
+                      <div className="advisorJobList">
+                        {advisorResult.jobs.map((job) => (
+                          <a href={job.sourceUrl} target="_blank" rel="noreferrer" key={job.id}>
+                            <b>{job.title}</b>
+                            <small>{job.location} · {job.company}</small>
+                          </a>
+                        ))}
+                      </div>
+                    ) : <p className="emptyHint">我建议你先打开推荐公司的官网入口，用上面的关键词搜索。</p>}
+                  </div>
+                </div>
+                ) : null}
+                <form className="advisorFollowup wide" onSubmit={submitAdvisor}>
+                  <input value={advisorQuestion} onChange={(event) => setAdvisorQuestion(event.target.value)} placeholder="继续问：比如我英语一般怎么办？能不能跨到供应链？" />
+                  <button className="primaryButton" type="submit" disabled={advisorLoading}>{advisorLoading ? '思考中' : '继续问'}</button>
+                </form>
+              </div>
+                </div>
+              ) : null}
               <div className="heroActions">
                 <button className="primaryButton" onClick={resetFilters}>浏览全部外企</button>
                 {quickSearches.map((item) => <button key={item} className="ghostButton" onClick={() => setQuery(item)}>{item}赛道</button>)}
               </div>
             </div>
-            <div className="panel cityAnswerPanel">
-              {cityQuery.trim() ? (
-                <>
-                  <div className="eyebrow">城市答案</div>
-                  <h3>{cityQuery.trim()}外企机会</h3>
-                  <p>已收录 {cityAnswerCompanies.length} 家相关外企{cityAnswerIndustries.length > 0 ? `，覆盖 ${cityAnswerIndustries.map(([name]) => name).join('、')}` : ''}。</p>
-                  <div className="previewCompanies">
-                    {cityAnswerCompanies.slice(0, 3).map((company) => (
-                      <button key={`preview-${company.company}`} onClick={() => openCompany(company)}>
-                        <strong>{company.company}</strong>
-                        <span>{company.industry}</span>
-                      </button>
-                    ))}
-                    {cityAnswerCompanies.length === 0 ? <span className="emptyHint">这个城市还在补充中，可以先进群催更。</span> : null}
-                  </div>
-                  {cityAnswerCompanies.length > 3 ? <div className="moreHint">下方列表已同步筛选，可继续查看全部 {cityAnswerCompanies.length} 家公司。</div> : null}
-                </>
-              ) : (
-                <>
-                  <h3>先查城市，再看公司</h3>
-                  <p>直接查看城市是否有收录、公司数量、行业方向和已整理的外企名单。</p>
-                  <div className="valueList">
-                    <span>138 家外企种子库</span>
-                    <span>30 个城市覆盖</span>
-                    <span>招聘入口已核验</span>
-                  </div>
-                </>
-              )}
-            </div>
           </section>
 
-          <section className="panel trustStrip">
-            <div><strong>全部可查</strong><span>城市数量、行业方向、公司详情和招聘入口</span></div>
-            <div><strong>持续完善</strong><span>你反馈的城市和功能会优先补充</span></div>
-            <div><strong>进群更新</strong><span>新增城市和岗位优先同步</span></div>
-          </section>
+
 
           <section className="panel feedbackPanel" id="feedback">
             <div className="feedbackIntro">
@@ -889,8 +1280,8 @@ export default function App() {
           <section className="panel regionExplorer">
             <div className="regionCopy">
               <div className="eyebrow">按地区找外企</div>
-              <h3>地图只是入口，答案落到城市</h3>
-              <p>点击区域后选择城市，直接查看该城市外企名单和岗位线索。</p>
+              <h3>按城市查外企机会</h3>
+              <p>免费展示每个地区前 10 家精选公司；开通会员后可查看完整城市名单、官网入口和岗位更新。</p>
               <div className="regionActions">
                 <button className={`chip ${selectedRegion === '全部' ? 'active' : ''}`} onClick={() => selectRegion('全部')}>全国</button>
                 {regionStats.map((region) => (
@@ -917,14 +1308,25 @@ export default function App() {
                 <div className="regionCompanies">
                   <div className="regionCompaniesHead">
                     <strong>{selectedRegionCity ? `${selectedRegionCity}外企名单` : `${activeRegion.name}外企名单`}</strong>
-                    <span>{activeRegionCompanies.length} / {activeRegion.companyCount}</span>
+                    <span>{isMember ? activeRegionCompanies.length : Math.min(activeRegionCompanies.length, freeRegionCompanyLimit)} / {activeRegionCompanies.length}</span>
                   </div>
-                  {activeRegionCompanies.length > 0 ? activeRegionCompanies.map((company) => (
-                    <button key={`${activeRegion.id}-${company.company}`} onClick={() => openCompany(company)}>
-                      <span>{company.company}</span>
-                      <small>{company.industry} · {company.primaryChinaCityFocus}</small>
-                    </button>
-                  )) : <p>这个区域还没有结构化公司数据，可以先订阅地区更新。</p>}
+                  {activeRegionCompanies.length > 0 ? (
+                    <>
+                      {visibleRegionCompanies.map((company) => (
+                        <button key={`${activeRegion.id}-${company.company}`} onClick={() => openCompany(company)}>
+                          <span>{company.company}</span>
+                          <small>{company.industry} · {company.primaryChinaCityFocus}</small>
+                        </button>
+                      ))}
+                      {!isMember && hiddenRegionCompanyCount > 0 ? (
+                        <div className="regionMemberLock">
+                          <strong>还有 {hiddenRegionCompanyCount} 家该地区外企</strong>
+                          <span>开通会员查看完整城市名单、官网入口和每日岗位推荐。</span>
+                          <button className="primaryButton" onClick={() => openMemberModal('company')}>19.9 解锁完整名单</button>
+                        </div>
+                      ) : null}
+                    </>
+                  ) : <p>这个区域还没有结构化公司数据，可以先订阅地区更新。</p>}
                 </div>
               ) : null}
             </div>
@@ -960,7 +1362,7 @@ export default function App() {
           </section>
 
           <section className="panel toolbar">
-            <div><strong>{filtered.length}</strong> 家公司匹配当前筛选</div>
+            <div><strong>{filtered.length}</strong> 家公司匹配当前筛选{!isMember && filtered.length > visibleFiltered.length ? `，免费展示前 ${visibleFiltered.length} 家` : ''}</div>
             <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
               <option value="company">按公司名</option>
               <option value="industry">按行业</option>
@@ -972,7 +1374,7 @@ export default function App() {
           {!error && filtered.length === 0 ? <section className="panel empty">没有匹配的公司，换个关键词或清空筛选试试。</section> : null}
 
           <section className="companyGrid">
-            {filtered.map((company) => (
+            {visibleFiltered.map((company) => (
               <article className="panel companyCard" key={`${company.company}-${company.recruitingUrl}`} onClick={() => openCompany(company)}>
                 <div className="companyHead">
                   <div className="logo" style={{ background: colorFor(company.industry) }}>{initials(company.company)}</div>
@@ -980,7 +1382,7 @@ export default function App() {
                     <h3>{company.company}</h3>
                     <p>{company.brandOrCnName} · {company.countryOrRegion}</p>
                   </div>
-                  <span className="sourceTag">{jobSummary[company.company]?.count ? `岗位 ${jobSummary[company.company].count}` : '官网'}</span>
+                  <span className={`sourceTag ${isCandidateCompany(company) ? 'candidate' : ''}`}>{companyBadge(company, jobSummary[company.company])}</span>
                 </div>
                 <div className="metaRows">
                   <div><b>行业</b><span>{company.industry}</span></div>
@@ -992,6 +1394,14 @@ export default function App() {
                 </div>
               </article>
             ))}
+            {!isMember && hiddenCompanyCount > 0 ? (
+              <article className="panel memberUnlockCard">
+                <div className="eyebrow">MEMBER</div>
+                <h3>还有 {hiddenCompanyCount} 家外企可继续查看</h3>
+                <p>开通 19.9 会员，解锁完整公司列表、AI 岗位推荐不限次和每日岗位推荐。</p>
+                <button className="primaryButton" onClick={() => openMemberModal('company')}>19.9 开通会员</button>
+              </article>
+            ) : null}
           </section>
         </main>
       </div>
@@ -1004,7 +1414,7 @@ export default function App() {
               <div>
                 <div className="eyebrow">{selected.industry} / {selected.subSector}</div>
                 <h2>{selected.company}</h2>
-                <p>{selected.brandOrCnName} · {selected.countryOrRegion} · {selected.primaryChinaCityFocus}</p>
+                <p>{selected.brandOrCnName}{selected.countryOrRegion ? ` · ${selected.countryOrRegion}` : ''} · {selected.primaryChinaCityFocus || '城市待补充'}</p>
               </div>
               <button className="closeButton" onClick={() => setSelected(null)} aria-label="关闭">×</button>
             </div>
@@ -1021,8 +1431,8 @@ export default function App() {
               <dl>
                 <div><dt>行业</dt><dd>{selected.industry}</dd></div>
                 <div><dt>细分赛道</dt><dd>{selected.subSector}</dd></div>
-                <div><dt>重点城市</dt><dd>{selected.primaryChinaCityFocus}</dd></div>
-                <div><dt>备注</dt><dd>{selected.notes}</dd></div>
+                <div><dt>重点城市</dt><dd>{selected.primaryChinaCityFocus || '待补充'}</dd></div>
+                <div><dt>招聘入口</dt><dd>官网</dd></div>
               </dl>
             </section>
             <section className="detailSection">
@@ -1052,13 +1462,20 @@ export default function App() {
                   </div>
                 ) : null}
                 <div className="jobList">
-                  {selectedJobs.jobs.slice(0, 12).map((job) => (
+                  {selectedJobs.jobs.slice(0, isMember ? 12 : freeDetailJobLimit).map((job) => (
                     <a className="jobItem" href={job.sourceUrl} target="_blank" rel="noreferrer" key={job.id}>
                       <strong>{job.title}</strong>
                       <span>{job.location} · {job.sourcePlatform}</span>
                     </a>
                   ))}
                 </div>
+                {!isMember && selectedJobs.jobs.length > freeDetailJobLimit ? (
+                  <div className="detailMemberLock">
+                    <strong>还有 {selectedJobs.jobs.length - freeDetailJobLimit} 个岗位可查看</strong>
+                    <span>开通会员后查看该公司更多岗位线索和每日岗位推荐。</span>
+                    <button className="primaryButton" onClick={() => openMemberModal('company')}>19.9 解锁岗位</button>
+                  </div>
+                ) : null}
               </section>
             ) : selectedJobsStatus === 'loading' ? (
               <section className="detailSection"><h3>岗位同步中</h3><p>正在读取该公司的官网岗位线索。</p></section>
@@ -1071,15 +1488,52 @@ export default function App() {
             ) : null}
             <section className="detailSection">
               <h3>招聘入口</h3>
-              <div className="careerLinks">
-                {splitRecruitingUrls(selected.recruitingUrl).map((url, index) => (
-                  <a className={index === 0 ? 'primaryButton linkButton' : 'ghostButton linkButton'} href={url} target="_blank" rel="noreferrer" key={url} onClick={() => trackEvent('career_link_click', { company: selected.company, targetUrl: url })}>
-                    {linkLabel(url, index)}
-                  </a>
-                ))}
-              </div>
+              {splitRecruitingUrls(selected.recruitingUrl).length ? (
+                <div className="careerLinks">
+                  {splitRecruitingUrls(selected.recruitingUrl).map((url, index) => (
+                    <a className={index === 0 ? 'primaryButton linkButton' : 'ghostButton linkButton'} href={url} target="_blank" rel="noreferrer" key={url} onClick={() => trackEvent('career_link_click', { company: selected.company, targetUrl: url })}>
+                      {linkLabel(url, index)}
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <div className="candidateNotice">
+                  <strong>官网入口暂未开放</strong>
+                  <span>这家公司招聘入口还在复核中，建议先查看其他已开放官网入口的公司。</span>
+                </div>
+              )}
             </section>
           </aside>
+        </div>
+      ) : null}
+      {memberModalOpen ? (
+        <div className="leadModal" role="dialog" aria-modal="true" aria-label="开通外企雷达会员">
+          <button className="wechatShade" onClick={() => setMemberModalOpen(false)} aria-label="关闭会员弹窗" />
+          <div className="leadCard memberPayCard">
+            <button className="closeButton" type="button" onClick={() => setMemberModalOpen(false)} aria-label="关闭">×</button>
+            <div className="eyebrow">外企雷达会员</div>
+            <h2>解锁完整外企求职雷达</h2>
+            <p>{memberModalReason === 'ai' ? '你已经用完今天的免费 AI 推荐。' : '当前免费版只展示部分精选外企。'}开通会员后，可以继续帮你按专业、城市、经历精准推荐外企岗位，并查看完整精选外企公司名单。</p>
+            <div className="memberBenefits">
+              <span>AI 岗位精准推荐不限次</span>
+              <span>解锁全部精选外企公司名单</span>
+              <span>查看所有官网招聘入口</span>
+              <span>每日更新可投岗位</span>
+              <span>免费简历分析、投递方向解析</span>
+            </div>
+            <div className="memberPayGrid">
+              <img src="/assets/wechat-pay-qr.png" alt="微信支付收款码" />
+              <form onSubmit={submitMemberPaymentContact}>
+                <strong>19.9 开通会员</strong>
+                <p>使用微信扫码支付 19.9 元。付款后在下面留下手机号或微信，我会帮你人工开通会员并提供1v1专属投递服务。</p>
+                <input value={memberContact} onChange={(event) => setMemberContact(event.target.value)} placeholder="付款后填写手机号或微信" />
+                <button className="primaryButton" type="submit" disabled={memberSubmitStatus === 'submitting'}>{memberSubmitStatus === 'submitting' ? '提交中' : '我已付款，提交开通信息'}</button>
+                {memberSubmitStatus === 'success' ? <span className="inlineSuccess">已收到，我会根据付款记录帮你开通。</span> : null}
+                {memberSubmitStatus === 'error' ? <span className="leadMessage error">请填写手机号或微信，方便开通会员。</span> : null}
+                {isLocalPreview ? <button className="ghostButton" type="button" onClick={activateLocalMembership}>本地测试：模拟已开通</button> : null}
+              </form>
+            </div>
+          </div>
         </div>
       ) : null}
       {authOpen ? (
@@ -1087,19 +1541,28 @@ export default function App() {
           <button className="wechatShade" onClick={() => setAuthOpen(false)} aria-label="关闭登录弹窗" />
           <form className="leadCard authCard" onSubmit={submitAuth}>
             <button className="closeButton" type="button" onClick={() => setAuthOpen(false)} aria-label="关闭">×</button>
-            <div className="eyebrow">{authMode === 'register' ? '创建账号' : '账号登录'}</div>
-            <h2>{pendingIntent ? `${intentMeta[pendingIntent.intent].label} · ${pendingIntent.company.company}` : '登录外企雷达'}</h2>
-            <p>用手机号和密码登录后，可以保存收藏、稍后投、已投递公司，后续也能继续查看自己的外企投递清单。</p>
+            <div className="eyebrow">{authMode === 'forgot' ? '找回密码' : authMode === 'register' ? '创建账号' : '账号登录'}</div>
+            <h2>{authMode === 'forgot' ? '找回外企雷达账号' : authReason === 'advisor' ? '登录后使用 AI 岗位推荐' : pendingIntent ? `${intentMeta[pendingIntent.intent].label} · ${pendingIntent.company.company}` : '登录外企雷达'}</h2>
+            <p>{authMode === 'forgot' ? '输入注册手机号，我会先核验账号，再帮你处理密码重置。' : authReason === 'advisor' ? '为了保留你的推荐方向，记录你的专属投递策略，请先用手机号登录。' : '用手机号和密码登录后，可以保存收藏、稍后投、已投递公司，后续也能继续查看自己的外企投递清单。'}</p>
             <input value={authPhone} onChange={(event) => setAuthPhone(event.target.value)} placeholder="手机号" inputMode="tel" />
-            <input value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} placeholder={authMode === 'register' ? passwordHint() : '输入密码'} type="password" />
+            {authMode !== 'forgot' ? <input value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} placeholder={authMode === 'register' ? passwordHint() : '输入密码'} type="password" /> : null}
             <div className="leadActions">
-              <button className="primaryButton" type="submit" disabled={authStatus === 'submitting'}>{authStatus === 'submitting' ? '处理中' : authMode === 'register' ? '注册并保存' : '登录并保存'}</button>
-              <button className="ghostButton" type="button" onClick={() => setAuthMode(authMode === 'register' ? 'login' : 'register')}>{authMode === 'register' ? '已有账号，去登录' : '没有账号，去注册'}</button>
+              <button className="primaryButton" type="submit" disabled={authStatus === 'submitting'}>{authStatus === 'submitting' ? '处理中' : authMode === 'forgot' ? '提交找回申请' : authMode === 'register' ? authReason === 'advisor' ? '注册后继续提问' : '注册并保存' : authReason === 'advisor' ? '登录后继续提问' : '登录并保存'}</button>
+              <button className="ghostButton" type="button" onClick={() => setAuthMode(authMode === 'forgot' ? 'login' : authMode === 'register' ? 'login' : 'register')}>{authMode === 'forgot' ? '返回登录' : authMode === 'register' ? '已有账号，去登录' : '没有账号，去注册'}</button>
             </div>
+            {authMode === 'login' ? <button className="linkButton" type="button" onClick={() => {
+              setAuthMode('forgot');
+              setAuthStatus('idle');
+              setAuthMessage('');
+            }}>忘记密码？</button> : null}
             {authMessage ? <span className={`leadMessage ${authStatus === 'error' ? 'error' : ''}`}>{authMessage}</span> : null}
           </form>
         </div>
       ) : null}
+      <button className="advisorDock" aria-label="打开 AI 岗位推荐" onClick={() => document.getElementById('ai-advisor')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
+        <span>AI</span>
+        <strong>问岗位推荐</strong>
+      </button>
       <button className="wechatDock" aria-label="加入外企求职微信群" onClick={() => {
         trackEvent('wechat_qr_open');
         setWechatOpen(true);

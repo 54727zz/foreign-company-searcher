@@ -49,13 +49,13 @@ function parseCsv(text: string): string[][] {
 
 function splitBenefits(value: string): string[] {
   return value
-    .split(';')
+    .split(/[;；,，]/)
     .map((item) => item.trim())
     .filter(Boolean);
 }
 
 export async function loadCompanies(): Promise<Company[]> {
-  const response = await fetch('/foreign_companies_by_industry.csv');
+  const response = await fetch('/company-data-current.csv', { headers: { 'x-fr-client': 'web-app' }, cache: 'no-store' });
   if (!response.ok) throw new Error('Unable to load company data');
   const text = await response.text();
   const [headers, ...rows] = parseCsv(text.replace(/^\uFEFF/, ''));
@@ -74,6 +74,13 @@ export async function loadCompanies(): Promise<Company[]> {
       benefitOrFilterTags: item.benefit_or_filter_tags,
       notes: item.notes,
       benefits: splitBenefits(item.benefit_or_filter_tags),
+      dataSource: item.data_source,
+      waiqiId: item.waiqi_id,
+      waiqiSourceUrl: item.waiqi_source_url,
+      waiqiPositionCount: item.waiqi_position_count,
+      mergeStatus: item.merge_status,
+      verifiedCareerUrl: item.verified_career_url,
+      careerEnrichmentStatus: item.career_enrichment_status,
     } satisfies Company;
   });
 }

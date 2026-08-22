@@ -25,6 +25,12 @@ const allowedEvents = new Set([
   'user_register',
   'user_login',
   'subscription_save',
+  'job_advisor_submit',
+  'job_advisor_paywall_view',
+  'job_advisor_pro_click',
+  'member_paywall_view',
+  'member_payment_contact_submit',
+  'member_local_unlock_click',
 ]);
 
 function clean(value: unknown, maxLength = 240): string | null {

@@ -8,7 +8,9 @@ const ALLOWED_EXACT_PATHS = new Set([
   '/admin',
   '/me',
   '/api/admin/summary',
+  '/api/advisor',
   '/api/auth/login',
+  '/api/auth/forgot-password',
   '/api/auth/me',
   '/api/auth/register',
   '/api/user/intent',
@@ -19,6 +21,7 @@ const ALLOWED_EXACT_PATHS = new Set([
   '/api/job-summary',
   '/api/track',
   '/foreign_companies_by_industry.csv',
+  '/company-data-current.csv',
   '/favicon.ico',
   '/robots.txt',
   '/sitemap.xml',
@@ -71,6 +74,18 @@ const KNOWN_SEARCH_BOTS = [
   'slurp',
 ];
 
+const PROTECTED_DATA_PATHS = [
+  '/foreign_companies_by_industry.csv',
+  '/company-data-current.csv',
+  '/jobs/sap-china.json',
+  '/jobs/sap-shanghai.json',
+];
+
+const requestHits = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const GENERAL_RATE_LIMIT = 180;
+const DATA_RATE_LIMIT = 45;
+
 function isAllowedPath(pathname: string): boolean {
   return ALLOWED_EXACT_PATHS.has(pathname) || ALLOWED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
@@ -85,6 +100,38 @@ function isSuspiciousUserAgent(userAgent: string): boolean {
   if (!value.trim()) return true;
   if (isKnownSearchBot(value)) return false;
   return SUSPICIOUS_USER_AGENTS.some((agent) => value.includes(agent));
+}
+
+function clientIp(request: Request): string {
+  return request.headers.get('cf-connecting-ip')
+    || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || 'local';
+}
+
+function isProtectedDataPath(pathname: string): boolean {
+  return PROTECTED_DATA_PATHS.includes(pathname) || pathname.startsWith('/jobs/');
+}
+
+function hasSameOriginFetchMetadata(request: Request): boolean {
+  const site = request.headers.get('sec-fetch-site');
+  const mode = request.headers.get('sec-fetch-mode');
+  if (!site && !mode) return false;
+  return (site === 'same-origin' || site === 'same-site' || site === 'none') && mode !== 'navigate';
+}
+
+function hasValidDataClientHeader(request: Request): boolean {
+  return request.headers.get('x-fr-client') === 'web-app';
+}
+
+function overRateLimit(key: string, limit: number): boolean {
+  const now = Date.now();
+  const current = requestHits.get(key);
+  if (!current || current.resetAt <= now) {
+    requestHits.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  current.count += 1;
+  return current.count > limit;
 }
 
 function blocked(reason: string): Response {
@@ -105,8 +152,24 @@ export const onRequest = async (context: PagesContext): Promise<Response> => {
   const userAgent = context.request.headers.get('user-agent') || '';
 
   const isLocalPreview = host.startsWith('localhost:') || host.startsWith('127.0.0.1:');
+  const ip = clientIp(context.request);
+  const protectedDataPath = isProtectedDataPath(pathname);
+
   if (!isLocalPreview && /:[0-9]+$/.test(host)) {
     return blocked('blocked-host-with-port');
+  }
+
+  if (overRateLimit(`${ip}:all`, GENERAL_RATE_LIMIT)) {
+    return new Response('Too Many Requests', { status: 429, headers: { 'retry-after': '60', 'x-security-rule': 'rate-limit-general' } });
+  }
+
+  if (protectedDataPath) {
+    if (overRateLimit(`${ip}:data`, DATA_RATE_LIMIT)) {
+      return new Response('Too Many Requests', { status: 429, headers: { 'retry-after': '60', 'x-security-rule': 'rate-limit-data' } });
+    }
+    if (!hasValidDataClientHeader(context.request) || (!isLocalPreview && !hasSameOriginFetchMetadata(context.request))) {
+      return blocked('blocked-direct-data-access');
+    }
   }
 
   if (HASH_SCAN_PATH.test(pathname)) {
@@ -130,5 +193,9 @@ export const onRequest = async (context: PagesContext): Promise<Response> => {
   secured.headers.set('x-content-type-options', 'nosniff');
   secured.headers.set('referrer-policy', 'strict-origin-when-cross-origin');
   secured.headers.set('permissions-policy', 'camera=(), microphone=(), geolocation=()');
+  if (protectedDataPath) {
+    secured.headers.set('cache-control', 'no-store');
+    secured.headers.set('x-robots-tag', 'noindex, nofollow, noarchive');
+  }
   return secured;
 };
