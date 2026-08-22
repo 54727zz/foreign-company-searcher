@@ -2,40 +2,80 @@
   <a href="README.md">中文</a> | <strong>English</strong>
 </p>
 
-# Foreign Company Radar
+# Foreign Company Radar · Waiqida
 
-A React + TypeScript website for browsing multinational-company information and job data in China. The project includes company filtering, regional discovery, job recommendations, career-link aggregation, and community entry features.
+> Live site: **[https://waiqida.cn](https://waiqida.cn)**
 
-Live demo: [https://foreign-company-searcher.pages.dev](https://foreign-company-searcher.pages.dev)
+A job-search navigation platform built for candidates in China who want to work at multinational companies. We've manually verified the official career portals of 283 foreign-invested enterprises operating in China — so you can skip the guesswork and go straight to the right place to apply.
 
-![Foreign Company Radar homepage](docs/assets/homepage.png)
+---
+
+## Why we built this
+
+Finding a job at a foreign company in China is hard — not because of your resume, but because **you can't even tell which companies are hiring or where to apply**.
+
+Most multinationals don't maintain an active presence on domestic platforms like Boss Zhipin or Zhaopin. Their postings are often third-party, outsourced, or simply absent. Job seekers spend hours searching only to find broken links or middlemen.
+
+The goal of Foreign Company Radar is simple: **surface the real, official hiring channels for foreign companies in China, organized and ready to use.**
+
+---
 
 ## Features
 
-- Browse a directory of multinational companies
-- Filter companies by industry
-- Filter companies by benefit tags
-- Search by company, city, role direction, and benefit keyword
-- Search from the homepage by city to see collected companies, industry directions, and company lists
-- View company details, recommended role directions, benefit tags, and key China cities
-- Display multiple career links for the same company, such as official sites, China sites, global applicant systems, and backup links
-- Show SAP China job recommendations with job title, location, source link, and update time
-- Discover companies by region through an interactive China-region map
-- Click a region to show its company list directly and sync the main company grid
-- Provide a WeChat job-seeker group entry in the bottom-right corner with an enlarged QR-code modal
-- Collect user feedback for requested cities, role directions, and future feature needs
-- Track lightweight interaction events through Cloudflare D1, including company detail clicks, career-link clicks, city searches, region filters, and feedback submissions
-- Support desktop and mobile browsing
+### Company Directory (free for everyone)
+- **283 companies** with manually verified career portals
+- Filter by industry, city, and benefit tags
+- Keyword search across company name, role direction, city, and benefits
+- Click any card to see: recommended roles, benefit tags, and direct career links
+
+### Regional Map
+- Interactive China region map — click a province or area to see its foreign companies
+- Region filter syncs with the main company grid
+
+### AI Career Advisor
+- Enter your major, city, and job goals
+- Get AI-matched industry directions, role types, target companies, and application keywords
+
+### Member Benefits
+- Unlimited AI advisor queries
+- **Export the full 283-company list as CSV** (with industry, city, and career links)
+- Daily job lead updates
+
+---
+
+## Changelog
+
+### v3 (current)
+- Launched on the official domain [waiqida.cn](https://waiqida.cn)
+- Full company directory now free for all visitors — no more preview limits
+- Members can export the complete company list as a CSV
+- Added AI Career Advisor with major- and city-based matching
+
+### v2
+- User account system (register / login / forgot password)
+- Job subscriptions: follow companies, cities, or keywords for update alerts
+- Company cards now show crawled job leads
+
+### v1
+- Company directory with industry, benefit, and keyword filtering
+- Interactive regional map
+- Lightweight event tracking via Cloudflare D1
+- Mobile-responsive layout
+
+---
 
 ## Tech Stack
 
-- React
-- TypeScript
-- Vite
-- CSS
-- Cloudflare Pages
-- Cloudflare D1
-- Node.js crawler script
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React + TypeScript + Vite |
+| Styling | Vanilla CSS |
+| Deployment | Cloudflare Pages |
+| Database | Cloudflare D1 |
+| Backend | Cloudflare Pages Functions |
+| Data pipeline | Node.js scripts (multi-source merge + manual verification) |
+
+---
 
 ## Run Locally
 
@@ -44,11 +84,9 @@ npm install
 npm run dev
 ```
 
-Default local URL:
+Local URL: `http://127.0.0.1:5173/`
 
-```text
-http://127.0.0.1:5173/
-```
+> Some features (D1 database, AI advisor) require a `.dev.vars` file locally. See `.dev.vars.example` for the required variables.
 
 ## Build
 
@@ -56,16 +94,31 @@ http://127.0.0.1:5173/
 npm run build
 ```
 
-The production build is generated in `dist/`.
+Output goes to `dist/`, ready for Cloudflare Pages.
+
+---
 
 ## Project Structure
 
 ```text
 .
-├── docs/assets/homepage.png   # README screenshot
-├── public/                    # Local static assets
-├── scripts/scrape-sap.mjs     # SAP job crawler
-├── src/                       # React frontend source code
-├── package.json
+├── src/                  # React frontend source
+│   ├── App.tsx           # Main application logic
+│   ├── lib/              # Utilities (CSV parsing, region matching, analytics)
+│   ├── types.ts          # TypeScript type definitions
+│   └── styles.css        # Global styles
+├── functions/            # Cloudflare Pages Functions (API routes)
+│   ├── api/advisor.ts    # AI advisor endpoint
+│   ├── api/track.ts      # Event tracking endpoint
+│   └── _middleware.ts    # Security middleware
+├── public/               # Static assets
+├── db/schema.sql         # D1 database schema
+├── wrangler.toml         # Cloudflare config
 └── vite.config.ts
 ```
+
+---
+
+## License
+
+MIT
