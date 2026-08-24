@@ -1337,7 +1337,7 @@ export default function App() {
                         <div className="regionMemberLock">
                           <strong>还有 {hiddenRegionCompanyCount} 家该地区外企</strong>
                           <span>开通会员查看完整城市名单、官网入口和每日岗位推荐。</span>
-                          <button className="primaryButton" onClick={() => openMemberModal('company')}>19.9 解锁完整名单</button>
+                          <button className="primaryButton" onClick={() => openMemberModal('company')}>¥19.9 解锁完整名单（832 家）</button>
                         </div>
                       ) : null}
                     </>
@@ -1485,7 +1485,7 @@ export default function App() {
                   <div className="detailMemberLock">
                     <strong>还有 {selectedJobs.jobs.length - freeDetailJobLimit} 个岗位可查看</strong>
                     <span>开通会员后查看该公司更多岗位线索和每日岗位推荐。</span>
-                    <button className="primaryButton" onClick={() => openMemberModal('company')}>19.9 解锁岗位</button>
+                    <button className="primaryButton" onClick={() => openMemberModal('company')}>¥19.9 解锁全部岗位</button>
                   </div>
                 ) : null}
               </section>
@@ -1525,19 +1525,19 @@ export default function App() {
             <button className="closeButton" type="button" onClick={() => setMemberModalOpen(false)} aria-label="关闭">×</button>
             <div className="eyebrow">外企雷达会员</div>
             <h2>解锁完整外企求职雷达</h2>
-            <p>{memberModalReason === 'ai' ? '你已经用完今天的免费 AI 推荐。' : '开通会员，解锁更多专属权益。'}开通会员后，可以继续帮你按专业、城市、经历精准推荐外企岗位，并导出完整外企公司名单。</p>
+            <p>{memberModalReason === 'ai' ? '你已经用完今天的免费 AI 推荐。' : '开通会员，解锁更多专属权益。'}开通会员后可导出完整名单、无限使用 AI 岗位推荐，帮你更快锁定目标外企。</p>
             <div className="memberBenefits">
-              <span>AI 岗位精准推荐不限次</span>
-              <span>导出完整 283 家外企公司名单（CSV）</span>
-              <span>查看所有官网招聘入口</span>
-              <span>每日更新可投岗位</span>
-              <span>免费简历分析、投递方向解析</span>
+              <span>🏢 导出 832 家外企官网招聘入口（CSV，持续更新）</span>
+              <span>🤖 AI 岗位精准推荐不限次</span>
+              <span>🔗 查看全部官网直链，跳过第三方平台</span>
+              <span>📬 新岗位上线提醒（按城市 / 公司订阅）</span>
+              <span>🎯 1v1 投递方向解析</span>
             </div>
             <div className="memberPayGrid">
               <img src="/assets/wechat-pay-qr.png" alt="微信支付收款码" />
               <form onSubmit={submitMemberPaymentContact}>
-                <strong>19.9 开通会员</strong>
-                <p>使用微信扫码支付 19.9 元。付款后在下面留下手机号或微信，我会帮你人工开通会员并提供1v1专属投递服务。</p>
+                <strong>¥19.9 永久会员</strong>
+                <p>微信扫码支付 19.9 元，付款后填写手机号或微信，人工 24h 内开通，附赠 1v1 投递建议。</p>
                 <input value={memberContact} onChange={(event) => setMemberContact(event.target.value)} placeholder="付款后填写手机号或微信" />
                 <button className="primaryButton" type="submit" disabled={memberSubmitStatus === 'submitting'}>{memberSubmitStatus === 'submitting' ? '提交中' : '我已付款，提交开通信息'}</button>
                 {memberSubmitStatus === 'success' ? <span className="inlineSuccess">已收到，我会根据付款记录帮你开通。</span> : null}

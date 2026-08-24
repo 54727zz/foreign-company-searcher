@@ -25,6 +25,7 @@ const ALLOWED_EXACT_PATHS = new Set([
   '/favicon.ico',
   '/robots.txt',
   '/sitemap.xml',
+  '/admin.html',
 ]);
 
 const ALLOWED_PREFIXES = ['/assets/', '/jobs/'];
