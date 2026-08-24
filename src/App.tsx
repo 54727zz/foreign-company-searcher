@@ -156,11 +156,13 @@ function isCandidateCompany(company: Company): boolean {
   return company.dataSource === 'waiqi_candidate';
 }
 
+const VERIFIED_STATUSES = new Set(['official_site_verified', 'domain_guess_verified', 'verified_career', 'official_site_no_verified_career', 'local_seed_existing_url']);
+
 function isPublicCompany(company: Company): boolean {
-  const hasCareerLink = splitRecruitingUrls(company.recruitingUrl).length > 0;
+  const hasCareerLink = splitRecruitingUrls(company.recruitingUrl).length > 0 || Boolean(company.verifiedCareerUrl);
   if (!hasCareerLink) return false;
   if (!isCandidateCompany(company)) return true;
-  return company.careerEnrichmentStatus === 'official_site_verified' || Boolean(company.verifiedCareerUrl);
+  return VERIFIED_STATUSES.has(company.careerEnrichmentStatus) || Boolean(company.verifiedCareerUrl);
 }
 
 function companyBadge(company: Company, summary?: JobSummaryItem): string {
