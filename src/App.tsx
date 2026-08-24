@@ -162,7 +162,7 @@ function isPublicCompany(company: Company): boolean {
   const hasCareerLink = splitRecruitingUrls(company.recruitingUrl).length > 0 || Boolean(company.verifiedCareerUrl);
   if (!hasCareerLink) return false;
   if (!isCandidateCompany(company)) return true;
-  return VERIFIED_STATUSES.has(company.careerEnrichmentStatus) || Boolean(company.verifiedCareerUrl);
+  return VERIFIED_STATUSES.has(company.careerEnrichmentStatus ?? '') || Boolean(company.verifiedCareerUrl);
 }
 
 function companyBadge(company: Company, summary?: JobSummaryItem): string {
