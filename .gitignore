@@ -13,6 +13,7 @@ yarn-error.log*
 pnpm-debug.log*
 docs/*.md
 work/
+CLAUDE.md
 data/jobs/
 foreign_companies_by_industry.csv
 foreign_companies_by_industry.xlsx
