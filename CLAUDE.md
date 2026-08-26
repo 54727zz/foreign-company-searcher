@@ -103,7 +103,10 @@ curl -so /dev/null -w "%{http_code}" --max-redirs 0 https://careers.smartrecruit
 - `origin`（公开仓库）：以下内容不推（已在 `.gitignore`）：
   - `docs/`
   - `work/`
+  - `scripts/`
+  - `public/company-data-current.csv`
   - `.dev.vars`
+  - `CLAUDE.md`
 
 推送前用 `git status` 确认没有敏感文件被意外追踪。
 
