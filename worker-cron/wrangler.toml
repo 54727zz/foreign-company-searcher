@@ -1,0 +1,12 @@
+name = "foreign-radar-cron"
+main = "src/index.ts"
+compatibility_date = "2026-08-08"
+
+[[d1_databases]]
+binding = "ANALYTICS_DB"
+database_name = "foreign_radar_analytics"
+database_id = "a0e60765-23c0-4864-803e-fd3dc21c4640"
+
+[triggers]
+crons = ["0 1 * * *"]
+# UTC 01:00 = 北京时间 09:00
