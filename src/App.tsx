@@ -196,9 +196,8 @@ function linkLabel(url: string, index: number): string {
 function detectCity(text: string, companies: Company[]): string | null {
   const citySet = new Set<string>();
   popularCities.forEach((city) => citySet.add(city));
-  companies.forEach((company) => company.primaryChinaCityFocus.split(/[\/、,，;；\s]+/).forEach((city) => {
-    const trimmed = city.trim();
-    if (trimmed.length >= 2 && trimmed.length <= 6) citySet.add(trimmed);
+  companies.forEach((company) => company.cities.forEach((city) => {
+    if (city.length >= 2 && city.length <= 6) citySet.add(city);
   }));
   return [...citySet].find((city) => text.includes(city)) ?? null;
 }
@@ -210,7 +209,7 @@ function buildAdvisorResult(question: string, companies: Company[], sapJobs: Job
   const preferred = new Set(profile.companies.map((item) => item.toLowerCase()));
   const questionTerms = normalized.split(/[\s,，。；;、]+/).filter((term) => term.length >= 2);
   const scoredCompanies = companies
-    .filter((company) => !city || company.primaryChinaCityFocus.includes(city))
+    .filter((company) => !city || company.cities.includes(city))
     .map((company) => {
       const text = companyText(company);
       let score = 0;
@@ -704,7 +703,7 @@ export default function App() {
   const cityAnswerCompanies = useMemo(() => {
     const city = cityQuery.trim();
     if (!city) return [];
-    return companies.filter((company) => company.primaryChinaCityFocus.includes(city));
+    return companies.filter((company) => company.cities.includes(city));
   }, [cityQuery, companies]);
 
   const cityAnswerIndustries = useMemo(() => {
@@ -719,7 +718,7 @@ export default function App() {
     if (selectedRegion === '全部') return [];
     return companies
       .filter((company) => companyMatchesRegion(company, selectedRegion))
-      .filter((company) => !selectedRegionCity || company.primaryChinaCityFocus.includes(selectedRegionCity));
+      .filter((company) => !selectedRegionCity || company.cities.includes(selectedRegionCity));
   }, [companies, selectedRegion, selectedRegionCity]);
   const visibleRegionCompanies = activeRegionCompanies;
   const hiddenRegionCompanyCount = Math.max(0, activeRegionCompanies.length - visibleRegionCompanies.length);

@@ -69,6 +69,7 @@ export async function loadCompanies(): Promise<Company[]> {
       brandOrCnName: item.brand_or_cn_name,
       countryOrRegion: item.country_or_region,
       primaryChinaCityFocus: item.primary_china_city_focus,
+      cities: item.cities ? item.cities.split(',').filter(Boolean) : [],
       recruitingUrl: item.recruiting_url,
       rolesToWatch: item.roles_to_watch,
       benefitOrFilterTags: item.benefit_or_filter_tags,

@@ -5,6 +5,7 @@ export type Company = {
   brandOrCnName: string;
   countryOrRegion: string;
   primaryChinaCityFocus: string;
+  cities: string[];
   recruitingUrl: string;
   rolesToWatch: string;
   benefitOrFilterTags: string;

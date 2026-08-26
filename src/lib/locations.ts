@@ -58,7 +58,7 @@ export function regionsForText(value: string): ChinaRegion[] {
 export function companyMatchesRegion(company: Company, regionId: string): boolean {
   const region = chinaRegions.find((item) => item.id === regionId);
   if (!region) return true;
-  return regionsForText(company.primaryChinaCityFocus).some((item) => item.id === region.id);
+  return company.cities.some((city) => region.cities.includes(city));
 }
 
 export function jobMatchesRegion(job: Job, regionId: string): boolean {
@@ -72,7 +72,7 @@ export function topCitiesForRegion(companies: Company[], jobs: Job[], regionId: 
   if (!region) return [];
   return region.cities
     .map((city) => {
-      const companyCount = companies.filter((company) => normalizeLocationText(company.primaryChinaCityFocus).includes(city)).length;
+      const companyCount = companies.filter((company) => company.cities.includes(city)).length;
       const jobCount = jobs.filter((job) => normalizeLocationText(`${job.city} ${job.location}`).includes(city)).length;
       return [city, companyCount + jobCount] as [string, number];
     })
