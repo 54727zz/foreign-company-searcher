@@ -612,6 +612,7 @@ export default function App() {
   const [memberModalReason, setMemberModalReason] = useState<'ai' | 'company' | 'general'>('general');
   const [advisorDailyCount, setAdvisorDailyCount] = useState<number | null>(null);
   const [memberContact, setMemberContact] = useState('');
+  const [memberWechat, setMemberWechat] = useState('');
   const [memberSubmitStatus, setMemberSubmitStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const isLocalPreview = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
@@ -866,6 +867,7 @@ export default function App() {
 
   async function submitMemberPaymentContact(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (memberSubmitStatus === 'success') return;
     if (!memberContact.trim()) {
       setMemberSubmitStatus('error');
       return;
@@ -873,6 +875,7 @@ export default function App() {
     setMemberSubmitStatus('submitting');
     trackEvent('member_payment_contact_submit');
     try {
+      const wechatInfo = memberWechat.trim() ? `，微信：${memberWechat.trim()}` : '';
       const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -881,7 +884,7 @@ export default function App() {
           targetCity: '',
           targetRole: '',
           contact: memberContact,
-          message: `用户提交会员开通信息，来源：${memberModalReason}`,
+          message: `用户提交会员开通信息，来源：${memberModalReason}${wechatInfo}`,
           ...currentAnalyticsContext(),
         }),
       });
@@ -1537,11 +1540,12 @@ export default function App() {
               <img src="/assets/wechat-pay-qr.png" alt="微信支付收款码" />
               <form onSubmit={submitMemberPaymentContact}>
                 <strong>¥19.9 永久会员</strong>
-                <p>微信扫码支付 19.9 元，付款后填写手机号或微信，人工 24h 内开通，附赠 1v1 投递建议。</p>
-                <input value={memberContact} onChange={(event) => setMemberContact(event.target.value)} placeholder="付款后填写手机号或微信" />
-                <button className="primaryButton" type="submit" disabled={memberSubmitStatus === 'submitting'}>{memberSubmitStatus === 'submitting' ? '提交中' : '我已付款，提交开通信息'}</button>
-                {memberSubmitStatus === 'success' ? <span className="inlineSuccess">已收到，我会根据付款记录帮你开通。</span> : null}
-                {memberSubmitStatus === 'error' ? <span className="leadMessage error">请填写手机号或微信，方便开通会员。</span> : null}
+                <p>微信扫码支付 19.9 元，付款后填写手机号和微信号，24h 内联系您开通，附赠 1v1 投递建议。</p>
+                <input value={memberContact} onChange={(event) => setMemberContact(event.target.value)} placeholder="手机号（必填）" inputMode="tel" disabled={memberSubmitStatus === 'success'} />
+                <input value={memberWechat} onChange={(event) => setMemberWechat(event.target.value)} placeholder="微信号（选填，方便联系）" disabled={memberSubmitStatus === 'success'} />
+                <button className="primaryButton" type="submit" disabled={memberSubmitStatus === 'submitting' || memberSubmitStatus === 'success'}>{memberSubmitStatus === 'submitting' ? '提交中' : memberSubmitStatus === 'success' ? '已提交' : '我已付款，提交开通信息'}</button>
+                {memberSubmitStatus === 'success' ? <span className="inlineSuccess">已收到！我们会在 24h 内联系您开通。</span> : null}
+                {memberSubmitStatus === 'error' ? <span className="leadMessage error">请填写手机号，方便开通会员。</span> : null}
                 {isLocalPreview ? <button className="ghostButton" type="button" onClick={activateLocalMembership}>本地测试：模拟已开通</button> : null}
               </form>
             </div>
