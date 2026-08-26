@@ -20,4 +20,5 @@ foreign_companies_by_industry.xlsx
 public/foreign_companies_by_industry.csv
 public/company-data-current.csv
 public/jobs/
+scripts/
 worker-cron/node_modules/
