@@ -587,6 +587,7 @@ export default function App() {
   const [selectedRegionCity, setSelectedRegionCity] = useState<string | null>(null);
   const [cityQuery, setCityQuery] = useState('');
   const [wechatOpen, setWechatOpen] = useState(false);
+  const [coopOpen, setCoopOpen] = useState(false);
   const [feedbackNeeds, setFeedbackNeeds] = useState<Set<string>>(new Set());
   const [feedbackCity, setFeedbackCity] = useState('');
   const [feedbackRole, setFeedbackRole] = useState('');
@@ -676,8 +677,14 @@ export default function App() {
   }, [companies, industry, benefits, query, selectedRegion, sortBy]);
 
 
-  const visibleFiltered = filtered;
-  const hiddenCompanyCount = 0;
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // 筛选条件变化时重置分页
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [industry, selectedRegion, benefits, query, sortBy]);
+
+  const visibleFiltered = filtered.slice(0, visibleCount);
+  const hiddenCompanyCount = Math.max(0, filtered.length - visibleCount);
 
   const topIndustries = useMemo(() => {
     const counts = new Map<string, number>();
@@ -1081,6 +1088,7 @@ export default function App() {
           <button onClick={() => document.getElementById('job-radar')?.scrollIntoView({ behavior: 'smooth' })}>岗位雷达</button>
           <button>福利情报</button>
           <button>投稿</button>
+          <button onClick={() => setCoopOpen(true)}>招聘合作</button>
           {authUser ? <button onClick={() => { window.location.href = '/me'; }}>{maskPhone(authUser.phone)}</button> : <button onClick={() => {
             setPendingIntent(null);
             setAuthReason('general');
@@ -1417,6 +1425,13 @@ export default function App() {
               </article>
             ))}
           </section>
+          {hiddenCompanyCount > 0 && (
+            <div className="loadMoreWrap">
+              <button className="loadMoreBtn" onClick={() => setVisibleCount(c => c + PAGE_SIZE)}>
+                加载更多 · 还有 {hiddenCompanyCount} 家
+              </button>
+            </div>
+          )}
         </main>
       </div>
 
@@ -1588,6 +1603,30 @@ export default function App() {
           <span>获取城市清单更新、岗位提醒和福利避坑线索</span>
         </div>
       </button>
+      {coopOpen ? (
+        <div className="leadModal" role="dialog" aria-modal="true" aria-label="招聘合作">
+          <button className="wechatShade" onClick={() => setCoopOpen(false)} aria-label="关闭" />
+          <div className="leadCard" style={{ maxWidth: 420 }}>
+            <button className="closeButton" type="button" onClick={() => setCoopOpen(false)} aria-label="关闭">×</button>
+            <div className="eyebrow">招聘合作</div>
+            <h2>欢迎与外企雷达合作 🤝</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 14, lineHeight: 1.7 }}>
+              外企雷达专注服务外企求职用户，覆盖 1000+ 家外企官网招聘入口。如果您希望：
+            </p>
+            <ul style={{ color: 'var(--muted)', fontSize: 14, lineHeight: 2, paddingLeft: 18, margin: '8px 0 16px' }}>
+              <li>将贵公司岗位推送给精准求职用户</li>
+              <li>在平台获得品牌曝光</li>
+              <li>参与校招、社招定向合作</li>
+            </ul>
+            <p style={{ fontSize: 14, color: 'var(--ink)', fontWeight: 600 }}>
+              📩 联系邮箱：<a href="mailto:1963336581@qq.com" style={{ color: 'var(--teal)' }}>1963336581@qq.com</a>
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 8 }}>
+              我们会在 1-2 个工作日内回复。
+            </p>
+          </div>
+        </div>
+      ) : null}
       {wechatOpen ? (
         <div className="wechatModal" role="dialog" aria-modal="true" aria-label="外企雷达求职交流群二维码">
           <button className="wechatShade" onClick={() => setWechatOpen(false)} aria-label="关闭微信群二维码" />
@@ -1597,6 +1636,15 @@ export default function App() {
           </div>
         </div>
       ) : null}
+      <footer className="siteFooter">
+        <div className="siteFooterInner">
+          <span>© 2026 外企雷达 · waiqida.cn</span>
+          <span className="siteFooterDot">·</span>
+          <button className="siteFooterLink" onClick={() => setCoopOpen(true)}>招聘合作 / 岗位收录</button>
+          <span className="siteFooterDot">·</span>
+          <button className="siteFooterLink" onClick={() => setCoopOpen(true)}>联系我们</button>
+        </div>
+      </footer>
     </div>
   );
 }

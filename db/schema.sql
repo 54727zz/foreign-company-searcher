@@ -57,6 +57,9 @@ CREATE TABLE IF NOT EXISTS app_users (
 
 CREATE INDEX IF NOT EXISTS idx_app_users_created_at ON app_users(created_at);
 
+-- 会员到期时间，NULL 表示非会员，有值表示到期时间（ISO8601）
+ALTER TABLE app_users ADD COLUMN member_expires_at TEXT;
+
 CREATE TABLE IF NOT EXISTS user_sessions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,

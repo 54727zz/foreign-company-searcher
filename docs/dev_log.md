@@ -78,6 +78,39 @@
 
 ---
 
+## 2026-08-27
+
+### 完成的事情
+
+#### 1. 合作入口上线
+- 顶部导航加「招聘合作」按钮，样式与其他导航一致
+- 底部 footer 加「招聘合作 / 岗位收录」和「联系我们」
+- 三处点击均弹出合作说明弹窗（不直接跳邮件），显示邮箱 1963336581@qq.com
+- footer 已添加版权信息
+
+#### 2. 公司列表分页
+- 默认展示 20 家，底部「加载更多 · 还有 XXX 家」按钮
+- 每次加载 20 家，筛选条件变化自动重置到第一页
+- 解决了用户面对 1065 家公司不知道从哪里看的问题
+
+### 未完成 / 遗留问题
+
+#### 🔴 会员开通功能（代码已写好，等待部署）
+代码已完成，但因 Cloudflare wrangler 登录问题（个人账号 OAuth 认证失败）未能部署：
+- D1 需要执行迁移：`ALTER TABLE app_users ADD COLUMN member_expires_at TEXT`
+- 新增后端接口：`/api/admin/set-member`（管理员开通/撤销会员）
+- 更新 `/api/auth/me`：返回 `isMember` 和 `memberExpiresAt`
+- Admin 后台「待开通会员」加了「开通 1 个月」按钮
+- **下次登录 Cloudflare 后第一件事：跑迁移 + 部署**
+
+迁移命令：
+```bash
+npx wrangler d1 execute foreign_radar_analytics --remote --command "ALTER TABLE app_users ADD COLUMN member_expires_at TEXT;"
+npx wrangler pages deploy dist --project-name foreign-company-searcher --branch main --commit-dirty=true
+```
+
+---
+
 ### 当前数据快照（2026-08-26）
 | 指标 | 数值 |
 |------|------|
