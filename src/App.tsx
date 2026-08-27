@@ -115,7 +115,7 @@ const intentMeta = {
 
 type CompanyIntent = keyof typeof intentMeta;
 
-type AuthUser = { id: number; phone: string };
+type AuthUser = { id: number; phone: string; isMember?: boolean; memberExpiresAt?: string | null };
 type ProfileIntent = { intent: CompanyIntent; company: string; city: string | null; created_at: string };
 type UserSubscription = { subscription_type: 'city' | 'company' | 'keyword'; value: string; created_at: string };
 type WatchedJob = { job_key: string; company: string; title: string; city: string | null; location: string | null; source_platform: string | null; source_url: string; scraped_at: string };
@@ -371,6 +371,31 @@ function MePage() {
 
       {profile ? (
         <>
+          {profile.user.isMember ? (
+            <section className="panel meMemberCard">
+              <div className="meMemberCardLeft">
+                <span className="meMemberBadge">✦ 会员</span>
+                <div>
+                  <strong>外企雷达会员</strong>
+                  <p>有效期至 {profile.user.memberExpiresAt ? profile.user.memberExpiresAt.slice(0, 10) : '—'}</p>
+                </div>
+              </div>
+              <div className="meMemberBenefits">
+                <span>✅ 完整外企名单 + 导出</span>
+                <span>✅ AI 推荐不限次</span>
+                <span>✅ 地区完整名单</span>
+                <span>✅ 1v1 投递方向解析</span>
+              </div>
+            </section>
+          ) : (
+            <section className="panel meMemberCardLocked">
+              <div>
+                <strong>开通会员，解锁全部外企求职权益</strong>
+                <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>导出名单 · AI 不限次 · 完整地区名单 · 1v1 建议</p>
+              </div>
+              <button className="primaryButton" onClick={() => { window.location.href = '/'; }}>¥19.9 立即开通</button>
+            </section>
+          )}
           <section className="meStats">
             <div className="panel adminStat"><strong>{grouped.saved.length}</strong><span>收藏公司</span></div>
             <div className="panel adminStat"><strong>{grouped.later.length}</strong><span>稍后投</span></div>
@@ -608,6 +633,8 @@ export default function App() {
   const [advisorMessages, setAdvisorMessages] = useState<AdvisorChatMessage[]>([]);
   const [advisorLoading, setAdvisorLoading] = useState(false);
   const [isMember, setIsMember] = useState(false);
+  const [memberExpiresAt, setMemberExpiresAt] = useState<string | null>(null);
+  const [memberWelcomeOpen, setMemberWelcomeOpen] = useState(false);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [memberModalReason, setMemberModalReason] = useState<'ai' | 'company' | 'general'>('general');
   const [advisorDailyCount, setAdvisorDailyCount] = useState<number | null>(null);
@@ -651,11 +678,23 @@ export default function App() {
   useEffect(() => {
     const token = localStorage.getItem('foreignRadarAuthToken');
     if (!token) return;
-    fetch('/api/auth/me', { headers: { authorization: `Bearer ${token}` } })
+    fetch('/api/auth/me', { headers: { authorization: `Bearer ${token}`, 'x-fr-client': 'web-app' } })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
-        if (payload?.ok) setAuthUser(payload.user);
-        else localStorage.removeItem('foreignRadarAuthToken');
+        if (payload?.ok) {
+          setAuthUser(payload.user);
+          if (payload.user.isMember) {
+            setIsMember(true);
+            setMemberExpiresAt(payload.user.memberExpiresAt);
+            // 只在本次会话首次登录时弹欢迎
+            if (!sessionStorage.getItem('memberWelcomeShown')) {
+              setMemberWelcomeOpen(true);
+              sessionStorage.setItem('memberWelcomeShown', '1');
+            }
+          }
+        } else {
+          localStorage.removeItem('foreignRadarAuthToken');
+        }
       })
       .catch(() => undefined);
   }, []);
@@ -1089,7 +1128,9 @@ export default function App() {
           <button>福利情报</button>
           <button>投稿</button>
           <button onClick={() => setCoopOpen(true)}>招聘合作</button>
-          {authUser ? <button onClick={() => { window.location.href = '/me'; }}>{maskPhone(authUser.phone)}</button> : <button onClick={() => {
+          {authUser ? <button onClick={() => { window.location.href = '/me'; }} className={isMember ? 'memberNavBtn' : ''}>
+            {maskPhone(authUser.phone)}{isMember ? <span className="memberNavBadge">会员 ✦</span> : null}
+          </button> : <button onClick={() => {
             setPendingIntent(null);
             setAuthReason('general');
             setAuthMode('register');
@@ -1206,7 +1247,9 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-                    {!isMember && advisorResult.companies.length > freeAdvisorCompanyLimit ? (
+                    {isMember ? (
+                      <div className="memberExclusiveTag">✦ 会员专属 · 已解锁全部推荐公司</div>
+                    ) : advisorResult.companies.length > freeAdvisorCompanyLimit ? (
                       <div className="advisorInlineLock">
                         <span>还有 {advisorResult.companies.length - freeAdvisorCompanyLimit} 家推荐公司可查看</span>
                         <button className="ghostButton" onClick={() => openMemberModal('company')}>会员解锁</button>
@@ -1343,7 +1386,9 @@ export default function App() {
                           <small>{company.industry} · {company.primaryChinaCityFocus}</small>
                         </button>
                       ))}
-                      {!isMember && hiddenRegionCompanyCount > 0 ? (
+                      {isMember ? (
+                        <div className="memberExclusiveTag">✦ 会员专属 · 已解锁该地区全部外企</div>
+                      ) : hiddenRegionCompanyCount > 0 ? (
                         <div className="regionMemberLock">
                           <strong>还有 {hiddenRegionCompanyCount} 家该地区外企</strong>
                           <span>开通会员查看完整城市名单、官网入口和每日岗位推荐。</span>
@@ -1390,7 +1435,10 @@ export default function App() {
             <div><strong>{filtered.length}</strong> 家公司匹配当前筛选</div>
             <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
               {isMember ? (
-                <button className="ghostButton" onClick={() => exportCompanies(filtered)}>导出名单</button>
+                <>
+                  <span className="memberUnlockedTag">✦ 会员已解锁</span>
+                  <button className="ghostButton" onClick={() => exportCompanies(filtered)}>导出名单</button>
+                </>
               ) : null}
               <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
               <option value="company">按公司名</option>
@@ -1498,7 +1546,9 @@ export default function App() {
                     </a>
                   ))}
                 </div>
-                {!isMember && selectedJobs.jobs.length > freeDetailJobLimit ? (
+                {isMember ? (
+                  <div className="memberExclusiveTag">✦ 会员专属 · 已解锁全部岗位</div>
+                ) : selectedJobs.jobs.length > freeDetailJobLimit ? (
                   <div className="detailMemberLock">
                     <strong>还有 {selectedJobs.jobs.length - freeDetailJobLimit} 个岗位可查看</strong>
                     <span>开通会员后查看该公司更多岗位线索和每日岗位推荐。</span>
@@ -1603,6 +1653,53 @@ export default function App() {
           <span>获取城市清单更新、岗位提醒和福利避坑线索</span>
         </div>
       </button>
+      {memberWelcomeOpen ? (
+        <div className="leadModal" role="dialog" aria-modal="true" aria-label="会员欢迎">
+          <button className="wechatShade" onClick={() => setMemberWelcomeOpen(false)} aria-label="关闭" />
+          <div className="leadCard" style={{ maxWidth: 400, textAlign: 'center' }}>
+            <button className="closeButton" type="button" onClick={() => setMemberWelcomeOpen(false)} aria-label="关闭">×</button>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>🎉</div>
+            <div className="eyebrow">外企雷达会员</div>
+            <h2>欢迎回来，会员！</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 14, margin: '12px 0 16px' }}>
+              您的会员有效期至 <strong style={{ color: 'var(--ink)' }}>{memberExpiresAt ? memberExpiresAt.slice(0, 10) : '—'}</strong>
+            </p>
+            <div className="memberBenefitsList">
+              <div className="memberBenefitItem">
+                <span className="memberBenefitIcon">🏢</span>
+                <div>
+                  <strong>完整外企名单</strong>
+                  <p>1065 家外企官网招聘入口，可导出 CSV</p>
+                </div>
+              </div>
+              <div className="memberBenefitItem">
+                <span className="memberBenefitIcon">🤖</span>
+                <div>
+                  <strong>AI 岗位推荐不限次</strong>
+                  <p>无限使用 AI 精准匹配你的求职方向</p>
+                </div>
+              </div>
+              <div className="memberBenefitItem">
+                <span className="memberBenefitIcon">🗺️</span>
+                <div>
+                  <strong>地区公司完整名单</strong>
+                  <p>查看所有城市和地区的外企分布</p>
+                </div>
+              </div>
+              <div className="memberBenefitItem">
+                <span className="memberBenefitIcon">📬</span>
+                <div>
+                  <strong>1v1 投递方向解析</strong>
+                  <p>添加微信 GoZ_Zhou8 获取专属建议</p>
+                </div>
+              </div>
+            </div>
+            <button className="primaryButton" style={{ width: '100%', marginTop: 16 }} onClick={() => setMemberWelcomeOpen(false)}>
+              开始使用
+            </button>
+          </div>
+        </div>
+      ) : null}
       {coopOpen ? (
         <div className="leadModal" role="dialog" aria-modal="true" aria-label="招聘合作">
           <button className="wechatShade" onClick={() => setCoopOpen(false)} aria-label="关闭" />

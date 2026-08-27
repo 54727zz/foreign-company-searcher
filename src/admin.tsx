@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 type EventCount = { event_name: string; count: number };
 type TopItem = { company?: string; city?: string; region?: string; target_url?: string; count: number };
@@ -6,6 +6,7 @@ type HighIntent = { count: number };
 type User = { id: number; phone: string; created_at: string; last_login_at: string | null };
 type UserIntent = { created_at: string; phone: string; intent: string; company: string; city: string };
 type Feedback = { id: number; feature_needs: string; target_city: string; contact: string; message: string; created_at: string };
+type MemberResult = { ok: boolean; message?: string; error?: string };
 type DailyEvent = { day: string; event_name: string; count: number };
 type Subscription = { subscription_type: string; value: string; count: number };
 
@@ -75,6 +76,7 @@ export default function Admin() {
   const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [memberResults, setMemberResults] = useState<Record<string, string>>({});
 
   async function load(t: string) {
     setLoading(true);
@@ -95,6 +97,21 @@ export default function Admin() {
   }
 
   useEffect(() => { if (token) load(token); }, []); // eslint-disable-line
+
+  const grantMember = useCallback(async (phone: string, months = 1) => {
+    setMemberResults(prev => ({ ...prev, [phone]: '开通中…' }));
+    try {
+      const res = await fetch('/api/admin/set-member', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', 'x-fr-client': 'web-app' },
+        body: JSON.stringify({ phone, months }),
+      });
+      const json = await res.json() as MemberResult;
+      setMemberResults(prev => ({ ...prev, [phone]: json.message ?? json.error ?? '完成' }));
+    } catch {
+      setMemberResults(prev => ({ ...prev, [phone]: '请求失败' }));
+    }
+  }, [token]);
 
   // ---- 登录界面 ----
   if (!data) {
@@ -221,10 +238,39 @@ export default function Admin() {
       {/* 付款待处理 */}
       {payFeedback.length > 0 && (
         <Section title={`💰 待开通会员 (${payFeedback.length})`}>
-          <Table
-            heads={['时间', '联系方式', '备注']}
-            rows={payFeedback.map(r => [fmt(r.created_at), r.contact || '—', r.message?.slice(0, 60) ?? ''])}
-          />
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr>{['时间', '联系方式', '备注', '操作'].map(h => (
+                <th key={h} style={{ textAlign: 'left', padding: '6px 10px', color: '#7b8494', borderBottom: '1px solid #2d3447', fontWeight: 500 }}>{h}</th>
+              ))}</tr>
+            </thead>
+            <tbody>
+              {payFeedback.map((r, i) => {
+                const phone = r.contact?.match(/^1[3-9]\d{9}$/)?.[0] ?? r.contact;
+                const result = memberResults[phone];
+                const isDone = result && result.includes('已为');
+                return (
+                  <tr key={i} style={{ borderBottom: '1px solid #1e2537' }}>
+                    <td style={{ padding: '7px 10px', color: '#c9d1e0' }}>{fmt(r.created_at)}</td>
+                    <td style={{ padding: '7px 10px', color: '#c9d1e0' }}><strong>{r.contact || '—'}</strong></td>
+                    <td style={{ padding: '7px 10px', color: '#c9d1e0' }}>{r.message?.slice(0, 60) ?? ''}</td>
+                    <td style={{ padding: '7px 10px' }}>
+                      {result ? (
+                        <span style={{ fontSize: 12, color: isDone ? '#68d391' : '#f6ad55' }}>{result}</span>
+                      ) : (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            onClick={() => grantMember(phone, 1)}
+                            style={{ padding: '4px 10px', borderRadius: 6, background: '#3b82f6', color: '#fff', border: 'none', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
+                          >开通 1 个月</button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </Section>
       )}
 

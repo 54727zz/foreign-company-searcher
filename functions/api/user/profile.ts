@@ -92,7 +92,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
      LIMIT 80`,
   ).bind(...binds)) : [];
 
-  return Response.json({ ok: true, user, intents, stats, subscriptions, watchedJobs, generatedAt: new Date().toISOString() });
+  // 查会员状态
+  const memberRow = await env.ANALYTICS_DB.prepare(
+    `SELECT member_expires_at FROM app_users WHERE id = ? LIMIT 1`,
+  ).bind(user.id).first<{ member_expires_at: string | null }>();
+  const memberExpiresAt = memberRow?.member_expires_at ?? null;
+  const isMember = !!memberExpiresAt && memberExpiresAt > new Date().toISOString();
+
+  return Response.json({ ok: true, user: { ...user, isMember, memberExpiresAt: isMember ? memberExpiresAt : null }, intents, stats, subscriptions, watchedJobs, generatedAt: new Date().toISOString() });
 };
 
 export const onRequestOptions: PagesFunction = async () => new Response(null, { status: 204 });

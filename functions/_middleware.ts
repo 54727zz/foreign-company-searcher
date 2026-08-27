@@ -8,6 +8,7 @@ const ALLOWED_EXACT_PATHS = new Set([
   '/admin',
   '/me',
   '/api/admin/summary',
+  '/api/admin/set-member',
   '/api/advisor',
   '/api/auth/login',
   '/api/auth/forgot-password',

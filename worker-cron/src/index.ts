@@ -298,4 +298,17 @@ export default {
       html,
     );
   },
+
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    if (url.pathname === '/trigger' && request.method === 'GET') {
+      const token = url.searchParams.get('token');
+      if (!token || token !== env.ADMIN_PASSWORD) {
+        return new Response('unauthorized', { status: 401 });
+      }
+      await this.scheduled({} as ScheduledEvent, env, {} as ExecutionContext);
+      return new Response('日报已发送，请查收邮件', { status: 200 });
+    }
+    return new Response('not found', { status: 404 });
+  },
 };

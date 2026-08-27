@@ -110,6 +110,13 @@ curl -so /dev/null -w "%{http_code}" --max-redirs 0 https://careers.smartrecruit
 
 推送前用 `git status` 确认没有敏感文件被意外追踪。
 
+## 城市字段维护规范
+- 主数据文件新增了 `cities` 字段（标准化城市数组，逗号分隔），原始字段 `primary_china_city_focus` 保留不动
+- 前端所有城市筛选逻辑均读 `cities` 字段，不读原始字段
+- 新增或更新公司数据后，必须重新跑 `scripts/normalize-cities.py` 刷新 `cities` 字段
+- 标准化规则：去掉"市"后缀、统一分隔符为逗号、别名映射（香港特别行政区→香港 等）
+- 脚本在 `scripts/normalize-cities.py`，直接 `python3 scripts/normalize-cities.py` 即可
+
 ## not_checked 公司挖掘流程
 当前 not_checked：2845 家，优先级顺序：
 1. 有英文名（`english_name` 非空）→ 跑 `/tmp/ats-finder-v2.mjs`

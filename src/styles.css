@@ -782,3 +782,88 @@ dd { margin: 0; color: var(--ink); }
   border-color: var(--teal);
   color: var(--teal);
 }
+
+/* 会员导航标签 */
+.memberNavBtn { color: var(--ink) !important; }
+.memberNavBadge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #2f9e8e, #38b2a0);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* 会员专属绿色标签 */
+.memberExclusiveTag {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #f0faf8;
+  border: 1px solid #b2dfdb;
+  color: #2f9e8e;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+/* 会员已解锁标签（工具栏） */
+.memberUnlockedTag {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2f9e8e;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #f0faf8;
+  border: 1px solid #b2dfdb;
+}
+
+/* 欢迎弹窗权益列表 */
+.memberBenefitsList { display: grid; gap: 12px; margin-top: 8px; text-align: left; }
+.memberBenefitItem { display: flex; align-items: flex-start; gap: 12px; }
+.memberBenefitIcon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.memberBenefitItem strong { font-size: 14px; color: var(--ink); display: block; }
+.memberBenefitItem p { font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+
+/* 个人中心会员卡 */
+.meMemberCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f0faf8, #e6f7f4);
+  border: 1px solid #b2dfdb;
+  margin-bottom: 0;
+}
+.meMemberCardLeft { display: flex; align-items: center; gap: 12px; }
+.meMemberBadge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #2f9e8e, #38b2a0);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.meMemberCardLeft strong { font-size: 15px; color: var(--ink); display: block; }
+.meMemberCardLeft p { font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+.meMemberBenefits { display: flex; flex-wrap: wrap; gap: 8px; }
+.meMemberBenefits span { font-size: 12px; color: #2f9e8e; background: #fff; border: 1px solid #b2dfdb; border-radius: 5px; padding: 3px 8px; }
+
+/* 个人中心未开通会员 */
+.meMemberCardLocked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #fafafa;
+  border: 1px solid var(--rule);
+  margin-bottom: 0;
+}

@@ -93,21 +93,39 @@
 - 每次加载 20 家，筛选条件变化自动重置到第一页
 - 解决了用户面对 1065 家公司不知道从哪里看的问题
 
+#### 3. 会员体系完整实现（本地已验证，等待部署）
+- D1：`app_users` 加 `member_expires_at` 字段，19.9元=1个月，支持顺延
+- 后端：`/api/admin/set-member` 管理员开通/撤销接口
+- 后端：`/api/auth/me` 和 `/api/user/profile` 返回 `isMember` + `memberExpiresAt`
+- Admin 后台：「待开通会员」每行加「开通 1 个月」按钮，点击直接开通
+- 前端：`isMember` 由服务端控制（不再只靠 localStorage）
+- 前端：登录后弹欢迎会员弹窗（每次会话只弹一次），展示到期时间 + 4 条权益
+- 前端：公司列表工具栏加「✦ 会员已解锁」绿色标签 + 导出按钮
+- 前端：个人中心显示会员卡（到期时间 + 权益标签）+ 未开通时显示开通入口
+- 前端：原「会员解锁」提示改为「✦ 会员专属」绿色标签
+
 ### 未完成 / 遗留问题
 
-#### 🔴 会员开通功能（代码已写好，等待部署）
-代码已完成，但因 Cloudflare wrangler 登录问题（个人账号 OAuth 认证失败）未能部署：
-- D1 需要执行迁移：`ALTER TABLE app_users ADD COLUMN member_expires_at TEXT`
-- 新增后端接口：`/api/admin/set-member`（管理员开通/撤销会员）
-- 更新 `/api/auth/me`：返回 `isMember` 和 `memberExpiresAt`
-- Admin 后台「待开通会员」加了「开通 1 个月」按钮
-- **下次登录 Cloudflare 后第一件事：跑迁移 + 部署**
+#### 🔴 Cloudflare 登录阻塞，以下功能本地已完成但未部署
+**问题**：wrangler 个人账号 OAuth 登录失败（Authentication error）
 
-迁移命令：
+**解锁方法（优先用 API Token）：**
 ```bash
-npx wrangler d1 execute foreign_radar_analytics --remote --command "ALTER TABLE app_users ADD COLUMN member_expires_at TEXT;"
-npx wrangler pages deploy dist --project-name foreign-company-searcher --branch main --commit-dirty=true
+# 去 Cloudflare 个人账号 → My Profile → API Tokens → Create Token
+# 选 Edit Cloudflare Workers 模板，复制 token
+export CLOUDFLARE_API_TOKEN=你的token
+
+# 然后执行迁移 + 部署：
+npx wrangler d1 execute foreign_radar_analytics --remote \
+  --command "ALTER TABLE app_users ADD COLUMN member_expires_at TEXT;"
+
+npx wrangler pages deploy dist \
+  --project-name foreign-company-searcher --branch main --commit-dirty=true
 ```
+
+**部署完成后还要做：**
+- 去 admin.html 给昨天付款的用户（19953141913）开通会员
+- 发短信告知已开通：「您好，外企雷达会员已为您开通，有效期1个月。添加微信 GoZ_Zhou8 进群。」
 
 ---
 
